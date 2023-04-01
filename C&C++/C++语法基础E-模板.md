@@ -133,7 +133,7 @@ void test()
 ## 03/模板机制（了解）
 
 * 编译器并不是把函数模板处理成能够处理任何类型的函数
-* 函数模板通过具体类型产生不是的函数
+* **函数模板**通过具体类型产生不同的函数---**模版函数**
 * 编译器会对函数模板进行两次编译，在声明的地方对模板代码本身进行编译，在调用的地方对参数替换后的代码进行编译
 
 ## 04/模板局限性及具体化（了解）
@@ -220,8 +220,120 @@ void test()
 
 ## 06/类模板中成员函数的创建时机
 
-类模板中的成员函数并不是在一开始就创建出来的，是在运行时创建的
+* 类模板中的成员函数并不是在一开始就创建出来的，是在运行时创建的
 
-## 07/类模板作为函数参数
+```C++
+class Person1
+{
+public:
+    void showPeron1(){}
+};
+class Person2
+{
+public:
+    void showPerson2(){}
+};
+template<class T>
+class Person
+{
+public:
+    void func1()
+    {
+        obj.showPerson1();
+    }
+    void func2()
+    {
+        obj.showPerson2();
+    }
+    T obj;
+};
+void test()
+{
+    Person<Person1> p1;
+    p1.func1();
+    p1.func2();
+}
+```
 
+## 07/类模板作为函数参数（三种方式）
+
+```C++
+template<class NAMETYPE, class AGETYPE>
+class Person
+{
+public:
+    Person(NAMETYPE name, AGETYPE age)
+    {
+        this->m_Name = name;
+        this->m_Age = age;
+    }
+    NAMETYPE m_Name;
+    AGETYPE m_Age;
+};
+//1、指定传入类型
+void doWork1(Person<string,int> & p)
+{
+    cout << p.m_Name << p.m_Age << endl;
+}
+//2、参数模板化
+template<class T1, class T2>
+void doWork2(Person<T1,T2>& p)
+{
+    cout << typeid(T1).name() << endl;//查看数据类型
+    cout << p.m_Name << p.m_Age << endl;
+}
+//3、整个类进行模版化
+template<class T>
+void doWork3(T& p)
+{
+    cout << p.m_Name << p.m_Age << endl;
+}
+void test()
+{
+    Person<string,int> p("A",10);
+    doWork3(p);
+}
+```
+
+## 08/类模板碰到继承的问题及解决
+
+```C++
+template<class T>
+class Base
+{
+public:
+    T m_A;
+}
+template<class T1, class T2>
+class Son : public Base<T2>
+{
+public:
+    T1 m_B;
+}
+void test()
+{
+    Son<int double> s;
+}
+
+```
+
+## 09/类模板的类外实现
+
+```C++
+template<class T1, class T2>
+class Person
+{
+public:
+    Person(T1 name , T2 age);
+    void showPerson();
+    T1 m_Name;
+    T2 m_Age;
+};
+//构造函数的类外实现
+template <class T1, class T2>
+Person<T1,T2>::Person(T1 name ,T2 age){}
+//成员函数的类外实现
+template<class T1, class T2>
+void Person<T1,T2>::showPerson() {}
+```
 

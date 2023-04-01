@@ -14,7 +14,7 @@
 
 将win64_11gR2_database_2of2中的\win64_11gR2_database_2of2\database\stage\Components\*（Components目录下所有文件）拷到\win64_11gR2_database_1of2\database\stage\Components目录下即可。
 
-**最好在安装前就复制过去，一次成功**
+***最好在安装前就复制过去，一次成功***
 
 ## 三、Oracle数据库的安装
 
