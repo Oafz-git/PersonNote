@@ -1,10 +1,10 @@
-1. ### 通过多个字段清除重复的数据
+1. 通过多个字段清除重复的数据
 
 ```sql
 DELETE FROM (SELECT COIL_ID,UNQUAL_SOURCE,UNQUAL_CATEGORY,ROW_NUMBER() OVER(PARTITION BY COIL_ID,UNQUAL_CATEGORY,UNQUAL_SOURCE ORDER BY COIL_ID) AS RN, a.* FROM TEST a) WHERE rn >1;
 ```
 
-2. ### 拼接字符串
+1. 拼接字符串
 
 ```sql
 select
@@ -25,4 +25,3 @@ where
 	ACT_SLAB_ID = '1232323'
 order by toc desc fetch first 1 rows only
 ```
-
