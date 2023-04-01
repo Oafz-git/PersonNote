@@ -337,3 +337,62 @@ template<class T1, class T2>
 void Person<T1,T2>::showPerson() {}
 ```
 
+## 10/类模板的分文件编写问题及解决
+
+* 类模板不建议做分文件编写，因为成员函数创建时机在运行阶段，使用时候必须要包含 `.cpp`才可以
+* 将类中的成员函数的声明和实现写到一个文件中，并将文件的后缀名改为`.hpp`即可
+
+## 11/类模板和友元
+
+```C++
+template<class T1, class T2> class Person;
+
+//告诉编译器有个模板的声明
+template<class T1, class T2> void printPerson2(Person<T1, T2>& p);
+
+//将模板函数的声明和实现写在一起
+template<class T1, class T2> 
+void printPerson3(Person<T1, T2>& p)
+{
+    cout << p.m_Name << p.m_Age << endl;
+}
+
+template<class T1, class T2>
+class Person
+{
+    //1、全局函数和友元作类内实现
+    friend void printPerson(Person<T1, T2>& p)
+    {
+        cout << p.m_Name << p.m_Age << endl;
+    }
+
+    //2、全局函数和友元作类外实现
+    friend void printPerson2<>(Person<T1, T2>& p);
+
+    //3、全局函数和友元作类外实现
+    friend void printPerson3<>(Person<T1, T2>& p);
+public:
+    Person(T1 name, T2 age)
+    {
+        this->m_Age = age;  
+        this->m_Name = name;
+    }
+private:
+    T1 m_Name;
+    T2 m_Age;
+};
+
+template <class T1, class T2>
+void printPerson2(Person<T1, T2>& p)
+{
+    cout << p.m_Name << p.m_Age << endl;
+}
+
+void test()
+{
+    Person<string, int> p("sss", 10);
+    //printPerson(p);
+    //printPerson2(p);
+    printPerson3(p);
+}
+```
