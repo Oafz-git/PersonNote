@@ -123,3 +123,171 @@ void doWork()
     throw MyException();
 }
 ```
+
+### （4）异常在多态中的使用
+
+```C++
+class BaseException
+{
+    virtual void printException() = 0;
+}
+class NullPointException : public BaseException
+{
+    virtual void printException()
+    {
+        cout << "空指针异常" << endl;
+    }
+}
+class OutOfRangeException : public BaseException
+{
+    virtual void printException()
+    {
+        cout << "越界异常" << endl;
+    }
+}
+void doWork()
+{
+    throw NullPointException();
+}
+void test()
+{
+    try
+    {
+        doWork();
+    }
+    catch(BaseException &e)
+    {
+        e.printException();
+    }
+}
+```
+
+### （6）系统标准异常的使用`include <stdexcept>`
+
+![系统标准库异常类](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/系统标准库异常类.png)
+
+```C++
+//系统标准异常的使用
+#include <stdexcept>
+class Person
+{
+public:
+    Person(int age)
+    {
+        if(age < 0 || age > 150)
+        {
+            throw out_of_range("年龄越界异常！");//
+        }
+        this->m_Age = age;
+    }
+    int m_Age;
+}
+void test()
+{
+    try
+    {
+        Person p(151);
+    }
+    catch(exception &e)
+    {
+        cout << e.what() << endl;
+    }
+}
+```
+
+## 03/标准输入/输出流
+
+![标准输入/输出流](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/标准输入-输出流.png)
+
+### （1）标准输入流常用函数
+
+1. `cin.get`缓冲区中读取一个字符
+2. `cin.get(两个参数)`不读换行符
+3. `cin.getline()`读取换行并扔掉
+4. `cin.ignore(N)`忽略N个字符
+5. `cin.peek`偷窥1个字符然后放回去
+6. `cin.putback`把字符放回缓冲区
+7. `cin.fail()`缓冲区中的标志位：0代表正常；1代表异常
+8. `cin.clear()` `cin.sync()`重置标志位，并刷新缓冲区
+
+### （2）标准输出流常用函数
+
+1. `cout.put()` `cout.write()`利用成员函数输出内容
+2. 通过流成员函数-标准化
+   1. `int number = 99;`
+   2. `cout.width(20);`预留20空间
+   3. `cout.fill('*');`填充
+   4. `cout.setf(ios::left);`左对齐
+   5. `cout.unsetf(ios::dec);`卸载十六进制
+   6. `cout.setf(ios::showbase);`设置显示进制-基数
+3. 使用控制符-标准化`iomanip`
+   1. `cout << setw(20)`预留20空间
+   2. `cout << setfill(`~`)`填充
+   3. `cout << setiosflags(ios::showbase)`显示进制基数
+   4. `cout << setiosflags(ios::left)`设置左对齐
+   5. `cout << hex`安装十六进制
+
+### （3）文件的读写
+
+```C++
+void test()
+{
+    //打开文件：参数--文件路径--打开方式
+    //ofstream ofs("./test.txt", ios::out | ios::trunc);
+    ofstream ofs;
+    ofs.open("./test.txt", ios::out | ios::trunc);
+    //判断文件是否打开成功
+    //if (!ofs)
+    if(!ofs.is_open())
+    {
+        cout << "文件打开失败" << endl;
+        return;
+    }
+    //写文件
+    ofs << "aaaa" << endl;
+    ofs << "ssss" << endl;
+    //关闭文件流
+    ofs.close();
+}
+```
+
+```C++
+void test()
+{
+    //打开文件：参数--文件路径--打开方式
+    //ifstream ifs("./test.txt", ios::in);
+    ifstream ifs;
+    ifs.open("./test.txt", ios::in);
+    //判断文件是否打开成功
+    //if(!ifs.is_open())
+    if (!ifs)
+    {
+        cout << "文件打开失败" << endl;
+        return;
+    }
+    //读文件
+    //第一种方式：按行读取，直到文件末尾
+    char buf[1024] = {0};
+    //将每行输入读入到缓冲区中
+    while (ifs >> buf)
+    {
+        cout << buf << endl;
+    }
+    //第二种方式
+    char buf[1024] = { 0 };
+    while (!ifs.eof())
+    {
+        ifs.getline(buf,sizeof(buf));
+        cout << buf << endl;
+    }
+    //第三种方式：单个字符读取
+    char c;
+    while ((c = ifs.get()) != EOF)
+    {
+        cout << c;
+    }
+
+    //关闭流对象
+    ifs.close();
+}
+```
