@@ -71,6 +71,7 @@ ssh生成本机公钥和私钥`ssh-keygen -t rsa`
   >>.a: 后缀（固定）  
   >
   >***Windows***: libxxx.lib
+
 * 静态库的制作：
   1. gcc获得.o文件
   2. 将.o文件打包，使用`ar`工具`archive`
@@ -79,3 +80,35 @@ ssh生成本机公钥和私钥`ssh-keygen -t rsa`
     > r - 将文件插入备存文件中  
     > c - 建立备存文件  
     > s - 索引  
+  
+* 静态库的使用
+
+```shell
+gcc main.c -o app -I 头文件目录 -l 库的名称 -L 库的位置
+```
+
+### 03/动态库（共享库）的制作
+
+* 命名规则：
+  > ***Linux***: libxxx.so--在Linux下是个可执行文件
+  >>lib: 前缀（固定）  
+  >>xxx: 库的名字，自己起  
+  >>.so: 后缀（固定）  
+  >***Windows***: libxxx.dll
+
+* 动态库的制作：
+  1. gcc得到.o文件，得到和位置无关的代码`gcc -c -fpic/-FPIC a.c b.c`
+  2. gcc得到动态库`gcc -shared a.o b.o -o libcalc.so`
+
+* 动态库的使用：
+
+```shell
+gcc main.c -o main -I include/ -L 动态库路径 -l calc
+```
+
+* 动态库加载失败的原因：（工作原理）
+  * 静态库：GCC进行链接时，会把静态库中代码打包到可执行程序中
+  * 动态库：GCC进行链接时，动态库的代码不会被打包到可执行程序中
+  * 程序启动之后，动态库会被动态加载到内存中，通过`ldd 可执行程序`（list dynamic dependencies）命令检查动态库依赖关系
+  * 如何定位共享文件呢？
+    > 当系统加载可执行代码时，能够知道其所依赖的库的名字，但还需要知道绝对路径。此时就需要系统的**动态载入器**来获取该**绝对路径**。对于elf格式的可执行程序，是有ld-linux.so来完成的，它先后搜索elf文件的**DT_RPATH段**-->**环境变量LD_LIBRARY_PATH**-->**/etc/ld.so.cache文件列表**-->**/lib/,/usr/lib**目录找到库文件后将其载入内存
