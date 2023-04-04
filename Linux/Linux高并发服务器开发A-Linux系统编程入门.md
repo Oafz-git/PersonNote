@@ -65,10 +65,10 @@ ssh生成本机公钥和私钥`ssh-keygen -t rsa`
 ### 02/静态库的制作
 
 * 命名规则：
-  >***Linux***: libxxx.a
-  >>lib: 前缀（固定）
-  >>xxx: 库的名字，自己起
-  >>.a: 后缀（固定）
+  >***Linux***: libxxx.a  
+  >>lib: 前缀（固定）  
+  >>xxx: 库的名字，自己起  
+  >>.a: 后缀（固定）  
   >
   >***Windows***: libxxx.lib
 * 静态库的制作：
@@ -76,6 +76,6 @@ ssh生成本机公钥和私钥`ssh-keygen -t rsa`
   2. 将.o文件打包，使用`ar`工具`archive`
 
   `ar rcs libxxx.a xxx.o xxx.o`
-    > r - 将文件插入备存文件中
-    > c - 建立备存文件
-    > s - 索引
+    > r - 将文件插入备存文件中  
+    > c - 建立备存文件  
+    > s - 索引  
