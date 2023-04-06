@@ -2,7 +2,30 @@
 
 ## 一、Linux开发环境的搭建
 
-ssh生成本机公钥和私钥`ssh-keygen -t rsa`
+### 01/工具
+
+> 安装LINUX系统（虚拟机、云服务器）
+
+1. 安装VMware Workstation（提取文件；`sudo`运行`.pl`文件）
+2. 安装ssh服务端`sudo apt install openssh-server`
+3. 安装`ifconfig`查询IP`sudo apt install net-tools`
+4. `ens33`默认网卡名称
+5. `oafz@oafz`第一个是用户名，第二个是主机名
+
+> 安装XSHELL、XFTP（远程连接）
+> 安装VScode
+
+**配置远程信息：**
+
+1. 主机名称`Host Ubuntu-18`
+2. IP地址`HostName`
+3. 用户名`User`
+
+**配置免密登录：**
+
+1. 在本机和LINUX下生成公钥、私钥`ssh-keygen -t rsa`,Linux的公钥和私钥默认生成到`~/.ssh`下
+2. 发送公钥`ssh-copy-id`（暂时不能使用）
+3. 在Linux上创建`authorized-keys`文件，将公钥拷入并保存
 
 ## 二、GCC介绍
 
@@ -36,7 +59,7 @@ ssh生成本机公钥和私钥`ssh-keygen -t rsa`
 ### 04/GCC编译常用参数
 
 |gcc编译选项|说明|
-|:----:|:----:|
+|:---:|:---:|
 |-E|预处理指定的源文件，不进行编译|
 |-S|编译指定的源文件，但是不进行汇编|
 |-c|编译、汇编指定的源文件，但是不进行链接|
@@ -57,6 +80,8 @@ ssh生成本机公钥和私钥`ssh-keygen -t rsa`
 
 ### 01/什么是库
 
+![静态库和动态库链接的区别](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/静态库和动态库链接的区别.png)
+
 * 库文件是计算机上的一类文件，可以简单的把库文件看成一种**代码仓库**，它提供给使用者一些可以拿来用的变量、函数或类
 * 库是特殊的一种程序，编写库的程序和编写一般的程序区别不大，只是**库不能单独运行**。
 * **静态库和动态库（共享库）的区别：**静态库在程序的链接阶段被复制到了程序中；动态库在*链接阶段*没有被复制到程序中，而是程序在运行时有系统*动态加载*到内存中供程序调用
@@ -64,7 +89,9 @@ ssh生成本机公钥和私钥`ssh-keygen -t rsa`
 
 ### 02/静态库的制作
 
-* 命名规则：
+![静态库的制作过程](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/静态库制作过程.png)
+
+* ***命名规则：***
   >***Linux***: libxxx.a  
   >>lib: 前缀（固定）  
   >>xxx: 库的名字，自己起  
@@ -72,7 +99,7 @@ ssh生成本机公钥和私钥`ssh-keygen -t rsa`
   >
   >***Windows***: libxxx.lib
 
-* 静态库的制作：
+* ***静态库的制作：***
   1. gcc获得.o文件
   2. 将.o文件打包，使用`ar`工具`archive`
 
@@ -81,34 +108,83 @@ ssh生成本机公钥和私钥`ssh-keygen -t rsa`
     > c - 建立备存文件  
     > s - 索引  
   
-* 静态库的使用
+* ***静态库的使用***
 
 ```shell
 gcc main.c -o app -I 头文件目录 -l 库的名称 -L 库的位置
 ```
 
+* ***静态库的优点和缺点***
+  > 优点：
+  >> 静态库被打包到应用程序中加载速度快
+  >> 发布程序无需提供静态库，移植方便
+  >
+  >缺点：
+  >> 消耗系统资源，浪费内存
+  >> 更新、部署、发布麻烦
+  
+![静态库的优缺点](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/静态库的优缺点.png)
+
 ### 03/动态库（共享库）的制作
 
-* 命名规则：
+* ***命名规则：***
   > ***Linux***: libxxx.so--在Linux下是个可执行文件
   >>lib: 前缀（固定）  
   >>xxx: 库的名字，自己起  
   >>.so: 后缀（固定）  
   >***Windows***: libxxx.dll
 
-* 动态库的制作：
+* ***动态库的制作：***
+
+![动态库制作过程](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/动态库制作过程.png)
+
   1. gcc得到.o文件，得到和位置无关的代码`gcc -c -fpic/-FPIC a.c b.c`
   2. gcc得到动态库`gcc -shared a.o b.o -o libcalc.so`
 
-* 动态库的使用：
+* ***动态库的使用：***
 
 ```shell
 gcc main.c -o main -I include/ -L 动态库路径 -l calc
 ```
 
-* 动态库加载失败的原因：（工作原理）
+* ***动态库加载失败的原因：（工作原理）***
   * 静态库：GCC进行链接时，会把静态库中代码打包到可执行程序中
   * 动态库：GCC进行链接时，动态库的代码不会被打包到可执行程序中
   * 程序启动之后，动态库会被动态加载到内存中，通过`ldd 可执行程序`（list dynamic dependencies）命令检查动态库依赖关系
   * 如何定位共享文件呢？
     > 当系统加载可执行代码时，能够知道其所依赖的库的名字，但还需要知道绝对路径。此时就需要系统的**动态载入器**来获取该**绝对路径**。对于elf格式的可执行程序，是有ld-linux.so来完成的，它先后搜索elf文件的**DT_RPATH段**-->**环境变量LD_LIBRARY_PATH**-->**/etc/ld.so.cache文件列表**-->**/lib/,/usr/lib**目录找到库文件后将其载入内存
+
+* ***解决动态库加载失败的问题***
+
+> **方法一：配置环境变量LD_LIBRARY_PATH：**
+
+* `env`查看所有环境变量
+* `echo $LD_LIBRARY_PATH`查看某一个环境变量
+* `export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:路径`设置环境变量（临时）
+  * `$`获取环境变量；`:`分割环境变量
+* `vim ~/.bashrc`设置环境变量（用户级）
+  * `. .bashrc`或`source .bashrc`使环境变量生效
+* `sudo vim /etc/profile`设置环境变量（系统级）
+  * `. /etc/profile`或`source /etc/profile`使环境变量生效
+
+> **方法二：修改`/etc/ld.so.cache`文件列表**
+
+使用`vim /etc/ld.so.conf`添加路径，然后使用`sudo ldconfig`生效
+
+> **方法三：将动态库文件放到`/lib/`或`/usr/lib`目录下**
+
+* ***动态库的优缺点***
+
+> 优点：
+>> 可以实现进程间资源共享（共享库）
+>> 更新、部署、发布简单
+>> 可以控制何时加载动态库
+>
+> 缺点：
+>> 加载速度比动态库慢
+>> 发布程序时需要提供依赖的动态库
+
+![动态库的优缺点](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/动态库的优缺点.png)
+
+
+
