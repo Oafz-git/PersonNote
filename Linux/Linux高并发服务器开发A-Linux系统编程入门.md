@@ -186,5 +186,207 @@ gcc main.c -o main -I include/ -L 动态库路径 -l calc
 
 ![动态库的优缺点](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/动态库的优缺点.png)
 
+## 四、Makefile
 
+### 01/什么是Makefile
 
+* 一个工程中的源文件不计其数，其按类型、功能、模块分别放在若干个目录中，Makefile文件定义了一系列的规则来指定哪些文件需要先编译，哪些文件需要后编译，哪些文件需要重新编译，甚至更复杂的功能操作，就像shell脚本一样，也可以执行操作系统的命令。  
+* Makefile好处是“自动化编译”，一旦写好，只需要一个make命令，整个工程完全自动编译，提高开发效率。  make是一个解释Makefile文件中指令的命令工具。`sudo apt install make`
+
+### 02/命名
+
+`makefile / Makefile`
+
+### 03/一个规则
+
+> 目标:依赖
+>（一个tab缩进）Shell命令
+> 如：add.o:add.c
+> (一个tab缩进) gcc -Wall -g -c add.c -o add.o
+>>目标：最终要生成的目标文件（伪目标除外）
+>>依赖：目标文件由哪些文件生成
+>>命令：通过执行该命令由依赖文件生成目标
+>
+>ALL:a.out #ALL-->指定终极目标
+>>Makefile中的其它规则一般都是为第一条规则服务的（如果第一条规则没有包含某个子规则，那么子规则不会执行）
+
+```Makefile
+app:sub.c add.c mult.c div.c main.c
+  gcc sub.c add.c mult.c div.c main.c -o app
+```
+
+### 04/工作原理
+
+* 命令在执行之前，检查规则中的依赖条件是否存在
+  * 如存在，执行命令
+  * 如不存在，向下检查其它规则，检查有没有一个规则是用来生成这个依赖的，如果找到了，则执行改规则中命令
+* 检查更新，在执行规则中的命令时，会比较目标和依赖文件的时间
+  * 如果依赖的时间比目标的时间晚，需要重新生成目标
+  * 如果依赖的时间比目标的时间早，目标不需要更新，对应规则中的命令不需要被执行
+
+```Makefile
+#比第一种效率高：不会将每个文件都重新编译，只会重新链接
+app:sub.o add.o mult.o div.o main.o
+  gcc sub.o add.o mult.o div.o main.o -o app
+
+sub.o:sub.c
+  gcc -c sub.c -o sub.o
+
+add.o:add.c
+  gcc -c add.c -o add.o
+
+mult.o:mult.c
+  gcc -c mult.c -o mult.o
+
+div.o:div.c
+  gcc -c div.c -o div.o
+
+main.o:main.c#会比较main.o和main.c的更新时间
+  gcc -c main.c -o main.o
+```
+
+### 05/变量
+
+* 自定义变量  
+  * 变量名 = 变量值   `var = hello`
+* 预定义变量
+  * `AR` - 归档维护程序的名称，默认值为`ar`
+  * `CC` - C编译器的名称，默认值为`cc`
+  * `CXX` - C++编译器的名称，默认值为`g++`
+* 自动变量（智能类规则的命令中使用）
+  * `$@` - 目标的完整名称
+  * `$<` - 第一个依赖文件的名称
+  * `$^` - 所有的依赖文件，如果将该变量应用在模式规则中，它可将依赖条件列表中的依赖依次取出，套用模式规则。
+* 获取变量的值
+  * `$(变量名)`
+
+### 06/模式匹配
+
+`%.o:%.c`
+
+* %: 通配符，匹配一个字符串
+* 两个%匹配同一个字符串
+
+```Makefile
+src = sub.o add.o mult.o div.o main.o
+target = app
+$(target):$(src)
+  $(CC) $(src) -o $(target)
+
+%.o:%.c#这是通过第一条规则向这里查找的
+  $(CC) -c $< -o $@
+```
+
+### 07/函数
+
+`$(wildcard PATTERN...)`
+
+* 功能：获取指定目录下指定类型的文件列表
+* 参数：PATTERN指的是某个或多个目录下的对应的某种类型的文件，如果有多个目录，一般使用空格间隔
+* 返回：得到的若干个文件的文件列表，文件名之间使用空格间隔
+  * `$(wildcard *.c ./sub/*.c)`
+  * 返回格式 `a.c b.c c.c d.c`
+
+`$(patsubst <pattern>,<replacement>,<text>)`
+
+* 功能：查找`<text>`中的单词（单词以“空格”、“Tab”或“回车”、“换行”分隔）是否符合模式`<pattern>`，如果匹配的话，则以`<replacement>`替换。
+* 参数：`<pattern>`可以包括通配符`%`，表示任意长度的子串。如果`<replacement>`中也包含`%`，那么，`<replacement>`中的这个`%`将是`<pattern>`中的那个`%`所代表的子串。（可以用`\`来转义，以`\%`来表示真实含义的`%`字符）
+* 返回：函数返回被替换过后的字符串
+  * `$(patsubst %.c, %.o, x.c bar.c)`
+  * 返回值格式：`x.o bar.o`
+
+```Makefile
+src=$(wildcard ./*.c)#add.c sub.c main.c mult.c div.c
+obj=$(patsubst %.c, %.o, $(src))
+target = app
+$(target):$(obj)
+  $(CC) $(obj) -o $(target)
+
+%.o:%.c
+  $(CC) -c $< -o $@
+
+.PHONY:clean#伪目标：使clean不会当前目录的clean文件比较
+clean:
+  rm $(obj) -f#删除生成的.o文件（make clean）
+```
+
+## 五、GDB调试
+
+### 01/什么是GDB
+
+* GDB是由GNU软件系统社区提供的调试工具，同GCC配套组成了一套完整的开发环境，GDB是Linux和许多类UNIX系统中的标准开发环境
+* 一般来说，GDB主要帮助你完成四个方面的功能
+  1. 启动程序，可以按照自定义的要求随心所欲的运行程序
+  2. 可让被调试的程序在所指定的调置的断点处停住（断点可以是条件表达式）
+  3. 当程序被停住时，可以检查此时程序中所发生的事
+  4. 可以改变程序，将一个BUG产生的影响修正从而测试其他BUG
+
+### 02/准备工作
+
+`gcc -g -Wall program.c -o program`
+
+* `-o`在为调试而编译时，我们会关掉编译器的优化选项`-o`
+* `-Wall`在尽量不影响程序行为的情况下选项打开所有warning，也可以发现许多问题，避免一些不必要的BUG
+* `-g`调试选项，在可执行文件中加入源代码的信息，比如可执行文件中第几条机器指令对应源代码的第几行，但并不是把整个源文件嵌入到可执行文件中，所以在调试时必须保证gdb能找到源文件
+
+### 03/GDB-启动、退出、查看代码
+
+* 启动和退出
+  * `gdb 可执行程序`
+  * `quit`
+* 给程序设置参数/获取设置参数
+  * `set args 10 20`
+  * `show args`
+* GDB使用帮助
+  * `help`
+* 查看当前文件代码
+  * `list/l` （从默认位置显示）
+  * `list/l 行号` （从指定的行显示）
+  * `list/l 函数名` （从指定的函数显示）
+* 查看非当前文件代码
+  * `list/l 文件名:行号`
+  * `list/l 文件名:函数名`
+* 设置显示的行数
+  * `show list/listsize`
+  * `set list/listsize 行数`
+
+### 04/GDB命令-断点操作
+
+* 设置断点
+  * `b/break 行号`
+  * `b/break 函数名`
+  * `b/break 文件名:行号`
+  * `b/break 文件名:函数`
+* 查看断点
+  * `i/info b/break`
+* 删除断点
+  * `d/del/delete 断点编号`
+* 设置断点无效
+  * `dis/disable 断点编号`
+* 设置断点生效
+  * `ena/enable 断点编号`
+* 设置条件断点（一般用在循环的位置）
+  * `b/break 10 if i ==5`
+
+### 05/GDB命名-调试命令
+
+* 运行GDB程序
+  * `start`（程序停在第一行）
+  * `run`（遇到断点才停）
+* 继续运行，到下一个断点停
+  * `c/continue`
+* 向下执行一行代码（不会进入函数体）
+  * `n/next`
+* 变量操作
+  * `p/print 变量名`（打印变量值）
+  * `ptype 变量名`（打印变量类型）
+* 向下单步调试（遇到函数进入函数体）
+  * `s/step`
+  * `finish`（跳出函数体）
+* 自动变量操作
+  * `display num`（自动打印指定变量的值）
+  * `i/info display`
+  * `undisplay 编号`
+* 其它操作
+  * `set var 变量名 = 变量值`
+  * `until`（跳出循环）
