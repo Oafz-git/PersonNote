@@ -25,3 +25,19 @@ where
 	ACT_SLAB_ID = '1232323'
 order by toc desc fetch first 1 rows only
 ```
+
+4. ### db2 - 基于 db2 中的 ID 匹配，从一个表到另一个表的 SQL 更新
+
+```sql
+UPDATE
+     Sales_Import SI
+ SET
+    Sales_Import.AccountNumber = (
+      SELECT 
+        RAN.AccountNumber
+      FROM
+        RetrieveAccountNumber RAN
+      WHERE  
+        SI.LeadID = RAN.LeadID
+    )
+```
