@@ -109,6 +109,8 @@
 | n-K  | 将光标置于待查看函数单词上，使用n-K（命令模式）跳转。n：指定卷数 |
 | *或# | 查看代码中的函数等定义 |
 
+![](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/manpage.png)
+
 ***查看宏定义***
 
 | 输入 | 输出                                       |
