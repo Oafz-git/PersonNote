@@ -1,0 +1,39 @@
+{
+    "root": {
+        "data": {
+            "id": "d0u41xg6yxk0",
+            "created": 1714140384266,
+            "text": "进程"
+        },
+        "children": [
+            {
+                "data": {
+                    "id": "d0u422vft200",
+                    "created": 1714140396072,
+                    "text": "topic"
+                },
+                "children": []
+            },
+            {
+                "data": {
+                    "id": "d0u426gff8w0",
+                    "created": 1714140403871,
+                    "text": "topic"
+                },
+                "children": []
+            },
+            {
+                "data": {
+                    "id": "d0u427ubda00",
+                    "created": 1714140406888,
+                    "text": "topic",
+                    "priority": 1
+                },
+                "children": []
+            }
+        ]
+    },
+    "template": "right",
+    "theme": "fresh-green",
+    "version": "1.4.43"
+}
