@@ -72,13 +72,11 @@ $(obj):%.o:%.c
 ## 7. 添加参数
 ![](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/makefile_7.png)
 
-## 8. 参数
-
 ```makefile
 make -f m6 # 使用m6文件执行make指令
 ```
  
-## 9. 举例
+## 8. 举例
 ![](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/makefile_9.png)
 ![](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/makefile_8.png)
    
