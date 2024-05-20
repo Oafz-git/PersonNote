@@ -193,5 +193,49 @@ int main(int argc, char *argv[])
 
 		返回：新文件描述符。
 
-	int dup2(int oldfd, int newfd); 文件描述符复制。重定向。
+	int dup2(int oldfd, int newfd); 文件描述符复制。重定向（将newfd重定向给oldfd，即将newfd指向oldfd所指向的文件）
+
+```C
+int main(int argc, char* argv[])
+{
+	int fd1 = open(argv[1], O_RDWR); //3
+	int fd2 = open(argv[2], O_RDWR); //4
+	
+	int fdret = dup2(fd1, fd2);//返回新文件描述符fd2，将fd2指向fd1所指向的文件
+	printf("fdret = %d\n", fdret);
+	
+	int ret = write(fd2, "1234567", 7);//将写入到fd1所指向的文件中
+	printf("ret = %d\n", ret);
+	
+	dup2(fd1, STDOUT_FILENO);//将屏幕输入，重定向给fd1所指向的文件；
+	printf("----------1234");//向屏幕输出的内容将写入到fd1所指向的文件中
+
+}
+```
+
+### 九、使用fcntl实现dup描述符
+
+	int fcntl(int fd, int cmd, ....)
+
+	cmd: F_DUPFD
+
+```C
+int main(int argc, char* argv[])
+{
+	int fd1 = open(argv[1], O_REWR);
+	printf("fd1 = %d\n", fd1);
+	
+	int newfd = fcntl(fd1, F_DUPFD, 0);//0被占用，fcntl使用文件描述符表中可用的最小文件描述符返回
+	printf("newfd = %d\n", newfd);
+	
+	int newfd2 = fcntl(fd1, F_DUPFD, 7);//7未被占用，返回 >=7 的文件描述符
+	printf("newfd2 = %d\n", newfd2);
+	
+	int ret = write(newfd2, "YYYYYYY", 7);//将写入到fd1所指向的文件中
+	printf("ret = %d\n", ret);
+	
+	return 0;
+}
+```
+
 
