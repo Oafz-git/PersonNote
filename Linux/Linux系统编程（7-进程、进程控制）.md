@@ -1,7 +1,7 @@
 # 进程相关概念
 	程序：死的。只占用磁盘空间。		——剧本。
 
-	进程；活的。运行起来的程序。占用内存、cpu等系统资源。	——戏。
+	进程：活的。运行起来的程序。占用内存、cpu等系统资源。	——戏。
 	
 ### 一、虚拟内存映射MMU（虚拟内存和物理内存映射）
 
@@ -59,7 +59,7 @@
 
 ![fork函数原理](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/fork%E5%87%BD%E6%95%B0%E5%8E%9F%E7%90%86.png)
 	
-## 二、示例：循环创建n个子进程
+### 示例：循环创建n个子进程
 
 ```C
 //loop_fork.c
@@ -84,11 +84,11 @@ int main(int argc, char* argv[])
 }
 ```
 
-## 三、进程共享（父子进程差异）
+## 二、进程共享（父子进程差异）
 
 ![进程共享](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/%E8%BF%9B%E7%A8%8B%E5%85%B1%E4%BA%AB.png)
 
-## 四、父子进程gdb调试
+## 三、父子进程gdb调试
 
 使用gdb调试的时候，gdb只能跟踪一个进程。可以在fork函数调用之前，通过指令设置gdb调试工具跟踪父进程或跟踪子进程。默认跟踪父进程。
 
@@ -98,11 +98,13 @@ int main(int argc, char* argv[])
 
 注：一定要在fork函数调用之前设置才有效。
 
-## 五、exec函数族：
+## 四、exec函数族：
 
 ![exec函数族](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/exec%E5%87%BD%E6%95%B0%E6%97%8F.png)
 
 ![exec函数族原理](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/exec%E5%87%BD%E6%95%B0%E6%97%8F%E5%8E%9F%E7%90%86.png)
+
+### 示例1
 
 ```C
 //fork_exec()
@@ -132,12 +134,12 @@ int main(int argc, char* argv[])
 }
 ```
 
-**特性**
+### 特性
 
 ![exec函数特性](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/exec%E5%87%BD%E6%95%B0%E6%97%8F%E7%89%B9%E6%80%A7%EF%BC%881%EF%BC%89.png)
 ![exec函数特性](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/exec%E5%87%BD%E6%95%B0%E6%97%8F%E7%89%B9%E6%80%A7%EF%BC%882%EF%BC%89.png)
 
-## 六、示例：将当前系统中的进程信息，打印到文件中
+### 示例2：将当前系统中的进程信息，打印到文件中
 
 ```C
 //exec_ps.c 
@@ -157,7 +159,7 @@ int main(int argc, char* argv[])
 }
 ```
 
-## 七、回收子进程
+## 五、回收子进程
 
 `ps ajx`查看父子进程
 

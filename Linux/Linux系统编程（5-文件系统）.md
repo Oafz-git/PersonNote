@@ -6,7 +6,7 @@
 
 #	文件系统函数
 
-### 一、stat/lstat函数（获取文件属性，从inode中获取）
+## 一、stat/lstat函数（获取文件属性，从inode中获取）
 
 	int stat(const char *path, struct stat *buf);
 
@@ -26,19 +26,51 @@
 ![struct_stat](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/struct_stat.png)
 ![文件类型-位图](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/%E6%96%87%E4%BB%B6%E7%B1%BB%E5%9E%8B-%E4%BD%8D%E5%9B%BE.png)
 
-### 二、access函数
+### 示例：获取文件属性
+
+```C
+//stat.c
+int main(int argc, char* argv[])
+{
+        int ret=0;
+        struct stat st;
+        lstat(argv[1], &st);
+        printf("st_ino=%d\n",st.st_ino);
+        printf("st_size=%ld\n",st.st_size);
+        printf("st_mode=%x\n",st.st_mode);
+        printf("st_uid=%d\n",st.st_uid);
+        printf("st_gid=%d\n",st.st_gid);
+        printf("st_nlink=%d\n",st.st_nlink);
+
+        if(S_ISREG(st.st_mode))				//使用宏函数
+                printf("It's a regular file\n");
+        if(S_ISDIR(st.st_mode))
+                printf("It's a dir file\n");
+        //if(S_ISFIFO(st.st_mode))
+        if((st.st_mode & S_IFMT) == S_IFIFO)		//使用宏-位图
+                printf("It's a fifo file\n");     
+        if(S_ISLNK(st.st_mode))
+                printf("It's a link file\n");
+        return 0;
+}
+```
+
+## 二、mkfifo命令
+`mkfifo f1`：创建管道文件
+
+## 三、access函数
 
 ![access函数](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/access%E5%87%BD%E6%95%B0.png)
 
-### 三、chomd函数
+## 四、chomd函数
 
 ![chmod函数](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/chmod%E5%87%BD%E6%95%B0.png)
 
-### 四、truncate函数
+## 五、truncate函数
 
 ![truncate函数](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/truncate%E5%87%BD%E6%95%B0.png)
 
-### 五、link/unlink函数（硬链接）
+## 六、link/unlink函数（硬链接）
 
 ![link函数](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/link%E5%87%BD%E6%95%B0.png)
 
@@ -46,196 +78,109 @@
 
 * 隐式回收：当进程结束运行时，所有该进程打开的文件会被关闭，申请的内存空间会系统被释放。
 
-### 六、symlink函数/readlink函数（符号链接）
+### 示例1：实现mv命令
+
+```C
+//mymv.c
+int main(int argc, char* argv[])
+{
+        int ret=0;
+        ret = link(argv[1],argv[2]);
+        if(ret == -1)
+        {
+                perror("link error");
+                exit(1);
+        }
+        ret = unlink(argv[1]);
+        if(ret == -1)
+        {
+                perror("unlink error");
+                exit(1);
+        }
+        return 0;
+}
+```
+
+### 示例2：实现rm命令
+
+```C
+myrm.c
+int main(int argc, char* argv[])
+{
+        int ret=0;
+        ret = link(argv[1],argv[2]);
+        if(ret == -1)
+        {
+                perror("link error");
+                exit(1);
+        }
+        ret = unlink(argv[1]);
+        if(ret == -1)
+        {
+                perror("unlink error");
+                exit(1);
+        }
+        return 0;
+}
+
+```
+### 示例3：临时文件的使用
+
+```C
+//unlink.c
+#include <unistd.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+
+int main(void)
+{
+	int fd, ret;
+	char *p = "test of unlink\n";
+	char *p2 = "after write something.\n";
+
+	fd = open("temp.txt", O_RDWR|O_CREAT|O_TRUNC, 0644);
+	if(fd < 0){
+		perror("open temp error");
+		exit(1);
+	}
+
+	ret = unlink("temp.txt");		 //应用：将unlink提前，即时程序崩了，也能够删除文件（临时文件）
+	if(ret < 0){
+		perror("unlink error");
+		exit(1);
+	}
+
+	ret = write(fd, p, strlen(p));
+    if (ret == -1) {
+        perror("-----write error");
+    }
+
+	printf("hi! I'm printf\n");
+	ret = write(fd, p2, strlen(p2));//是将内容写入到缓存中，cat命令是查看磁盘上的文件内容
+    if (ret == -1) {
+        perror("-----write error");
+    }
+
+    printf("Enter anykey continue\n");
+    getchar();
+
+    p[3] = 'H';//段错误
+
+	close(fd);//fd没有被回收，会被隐式回收，程序需要退出
+
+	return 0;
+}
+```
+
+## 七、symlink函数/readlink函数（符号链接）
 ![symlink函数](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/symlink%E5%87%BD%E6%95%B0.png)
 
 ![readlink函数](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/readlink%E5%87%BD%E6%95%B0.png)
 
 ![readlink命令](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/readlink%E5%91%BD%E4%BB%A4.png)
 
-### 七、rename函数
+## 八、rename函数
 
 ![rename函数](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/rename%E5%87%BD%E6%95%B0.png)
-
-# 目录操作函数
-
-### 一、getcwd函数
-
-![getcwd函数](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/getcwd%E5%87%BD%E6%95%B0.png)
-
-### 二、chdir函数
-
-![chdir函数](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/chdir%E5%87%BD%E6%95%B0.png)
-
-
-### 三、文件和目录权限
-
-![文件和目录权限](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/%E6%96%87%E4%BB%B6%E3%80%81%E7%9B%AE%E5%BD%95%E6%9D%83%E9%99%90.png)
-
-### 四、opendir函数
-
-![opendir函数](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/opendir%E5%87%BD%E6%95%B0.png)
-
-### 五、closedir函数
-
-![closedir函数](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/closedir%E5%87%BD%E6%95%B0.png)
-
-### 六、readdir函数
-
-![readdir函数](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/readdir%E5%87%BD%E6%95%B0.png)
-![struct_dirent](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/struct_dirent.png)
-
-### 七、示例
-
-#### 1、实现ls命令
-
-```C
-#include <stdio.h>
-#include <sys/types.h>
-#include <dirent.h>
-#include <stdlib.h>
-
-int main(int argc, char* argv[])
-{
-        DIR *dp;
-        struct dirent *sdp;
-        dp = opendir(argv[1]);
-        if(dp == NULL)
-        {
-                perror("opendir error");
-                exit(1);
-        }
-        while((sdp = readdir(dp)) != NULL)
-        {
-                printf("%s\t",sdp->d_name);
-        }
-        printf("\n");
-        closedir(dp);
-        return 0;
-}
-```
-
-#### 2、实现ls -R命令（递归遍历目录，同时显示文件大小）
-
-```C
-//ls_R.c
-#include <unistd.h>
-#include <sys/stat.h>
-#include <dirent.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-
-#define PATH_LEN 256
-//dir=/home/itcast/1110_linux    fcn=isfile
-
-void fetchdir(const char *dir, void (*fcn)(char *)) //该函数被调用,既已被判定为目录
-{
-    char name[PATH_LEN];
-    struct dirent *sdp;
-    DIR *dp;
-
-    if ((dp = opendir(dir)) == NULL) {     //打开目录失败
-        //perror("fetchdir can't open");
-        fprintf(stderr, "fetchdir: can't open %s\n", dir);
-        return;
-    }
-
-    while ((sdp = readdir(dp)) != NULL) {
-        if (strcmp(sdp->d_name, ".") == 0 || strcmp(sdp->d_name, "..") == 0) {    //防止出现无限递归
-            continue; 
-        }
-
-        if (strlen(dir)+strlen(sdp->d_name)+2 > sizeof(name)) 
-            fprintf(stderr, "fetchdir: name %s %s too long\n", dir, sdp->d_name);
-        } else {
-            sprintf(name, "%s/%s", dir, sdp->d_name);
-            (*fcn)(name);                     //这是一个什么??  
-        }
-    }
-
-    closedir(dp);
-}
-
-void isfile(char *name)          //处理目录/文件
-{
-    struct stat sbuf;
-
-   if (stat(name, &sbuf) == -1) {   //文件名无效
-        fprintf(stderr, "isfile: can't access %s\n", name);
-        exit(1);
-    }
-    if ((sbuf.st_mode & S_IFMT) == S_IFDIR) {  //判定是否为目录
-        fetchdir(name, isfile);                //回调函数,谁是回调函数呢?
-    }
-
-    printf("%8ld %s\n", sbuf.st_size, name);   //不是目录,则是普通文件,直接打印文件名
-}
-//./ls_R ~/1110_linux
-int main(int argc, char *argv[])
-{
-    if (argc == 1) 
-        isfile(".");
-    else
-        while (--argc > 0)          //可一次查询多个目录 
-            isfile(*++argv);        //循环调用该函数处理各个命令行传入的目录
-
-    return 0;
-}
-```
-
-
-### 八、dup和dup2函数（重定向）
-
-	int dup(int oldfd);		文件描述符复制。
-
-		oldfd: 已有文件描述符
-
-		返回：新文件描述符。
-
-	int dup2(int oldfd, int newfd); 文件描述符复制。重定向（将newfd重定向给oldfd，即将newfd指向oldfd所指向的文件）
-
-```C
-int main(int argc, char* argv[])
-{
-	int fd1 = open(argv[1], O_RDWR); //3
-	int fd2 = open(argv[2], O_RDWR); //4
-	
-	int fdret = dup2(fd1, fd2);//返回新文件描述符fd2，将fd2指向fd1所指向的文件
-	printf("fdret = %d\n", fdret);
-	
-	int ret = write(fd2, "1234567", 7);//将写入到fd1所指向的文件中
-	printf("ret = %d\n", ret);
-	
-	dup2(fd1, STDOUT_FILENO);//将屏幕输入，重定向给fd1所指向的文件；
-	printf("----------1234");//向屏幕输出的内容将写入到fd1所指向的文件中
-
-}
-```
-
-### 九、使用fcntl实现dup描述符
-
-	int fcntl(int fd, int cmd, ....)
-
-	cmd: F_DUPFD
-
-```C
-int main(int argc, char* argv[])
-{
-	int fd1 = open(argv[1], O_REWR);
-	printf("fd1 = %d\n", fd1);
-	
-	int newfd = fcntl(fd1, F_DUPFD, 0);//0被占用，fcntl使用文件描述符表中可用的最小文件描述符返回
-	printf("newfd = %d\n", newfd);
-	
-	int newfd2 = fcntl(fd1, F_DUPFD, 7);//7未被占用，返回 >=7 的文件描述符
-	printf("newfd2 = %d\n", newfd2);
-	
-	int ret = write(newfd2, "YYYYYYY", 7);//将写入到fd1所指向的文件中
-	printf("ret = %d\n", ret);
-	
-	return 0;
-}
-```
-
-

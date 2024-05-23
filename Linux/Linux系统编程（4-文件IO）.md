@@ -5,7 +5,7 @@ C标准函数和系统调用的关系：
 
 # 文件IO
 
-### 一、open函数/close函数
+## 一、open函数/close函数
 
 	int open(char *pathname, int flags)			#include <unistd.h>
 
@@ -45,7 +45,7 @@ C标准函数和系统调用的关系：
 	int close(int fd);
 
 
-### 二、错误处理函数errno：
+## 二、错误处理函数errno：
 
 	errno表示操作系统的全局变量，可直接使用   #include<errno.h>
 	
@@ -55,7 +55,7 @@ C标准函数和系统调用的关系：
 	void perror(const char *s); //相当strerror(errno)和printf的结合 #include<stdio.h>
 	exit(1); #include<stdlib.h>
 
-### 三、read函数/write函数
+## 三、read函数/write函数
 
 	ssize_t read(int fd, void *buf, size_t count);
 
@@ -99,10 +99,10 @@ C标准函数和系统调用的关系：
 * 预读入缓输出机制（系统调用和库函数比较）
 ![预读入缓输出](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/%E9%A2%84%E8%AF%BB%E5%85%A5%E7%BC%93%E8%BE%93%E5%87%BA%E6%9C%BA%E5%88%B6.png)
 
-### 四、示例
+### 示例：模仿cp命令
 
 ```C
-// myPc.c：模仿cp命令
+// myCp.c
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -144,7 +144,7 @@ int main(int argc, char* argv[])
 ```
 		
 
-### 五、文件描述符：
+## 四、文件描述符：
 
 ![文件描述符](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/%E6%96%87%E4%BB%B6%E6%8F%8F%E8%BF%B0%E7%AC%A6.png)
 
@@ -160,11 +160,13 @@ int main(int argc, char* argv[])
 
 	2 - STDERR_FILENO
 
-### 六、阻塞、非阻塞（设备文件、网络文件的属性）
+## 五、阻塞、非阻塞（设备文件、网络文件的属性）
 	
 	产生阻塞的场景。 读设备文件。读网络文件。（读常规文件无阻塞概念。）
 
 	/dev/tty -- 终端文件。
+
+### 示例：非阻塞方式读取终端文件
 
 ```C
 //nonblock_timeout.c
@@ -216,7 +218,7 @@ int main(void)
 }
 ```
 
-### 七、fcntl函数
+## 六、fcntl函数：改变一个[已经打开]的文件的访问属性
 
 	int fcntl(int fd, int cmd, ...); //改变一个[已经打开]的文件的访问属性；
 
@@ -233,7 +235,53 @@ int main(void)
 	
 ![位图](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/%E4%BD%8D%E5%9B%BE.png)
 
-### 八、lseek函数：
+### 示例：为stdin添加属性信息
+
+```C
+#include <unistd.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define MSG_TRY "try again\n"
+
+int main(void)
+{
+	char buf[10];
+	int flags, n;
+
+	flags = fcntl(STDIN_FILENO, F_GETFL); //获取stdin属性信息
+	if(flags == -1){
+		perror("fcntl error");
+		exit(1);
+	}
+	flags |= O_NONBLOCK;
+	int ret = fcntl(STDIN_FILENO, F_SETFL, flags);//为stdin添加属性信息
+	if(ret == -1){
+		perror("fcntl error");
+		exit(1);
+	}
+
+tryagain:
+	n = read(STDIN_FILENO, buf, 10);
+	if(n < 0){
+		if(errno != EAGAIN){		
+			perror("read /dev/tty");
+			exit(1);
+		}
+		sleep(3);
+		write(STDOUT_FILENO, MSG_TRY, strlen(MSG_TRY));
+		goto tryagain;
+	}
+	write(STDOUT_FILENO, buf, n);
+
+	return 0;
+}
+```
+
+## 七、lseek函数：修改文件偏移量（读写位置）
 
 	off_t lseek(int fd, off_t offset, int whence);//修改文件偏移量（读写位置）
 
@@ -250,18 +298,107 @@ int main(void)
 
 		失败：-1 errno
 
-	应用场景：	
-		1. 文件的“读”、“写”使用同一偏移位置。
+### 示例：
 
-		2. 使用lseek获取文件大小：返回值即大小
+#### 1. 文件的“读”、“写”使用同一偏移位置。
 
-		3. 使用lseek拓展文件大小：要想使文件大小真正拓展，必须引起IO操作，没有添加字符的会有“文件空洞”
+```C
+int main(int argc, char* argv[])
+{
+        char msg[] = "It's a for lseek.txt";
+        int fd, n;
+        char buf;
+        fd = open("lseek.txt", O_RDWR|O_CREAT|O_TRUNC, 0664);
+        if(fd < 0)
+        {
+                perror("open error");
+                exit(1);
+        }
+        n = write(fd,msg,strlen(msg));
 
-			使用 truncate 函数，直接拓展文件。	int ret = truncate("dict.cp", 250);
+        lseek(fd, 0, SEEK_SET);//重置光标到文件开始位置
+        while(n = read(fd, &buf, 1))
+        {
+                if(n == -1)
+                {
+                        perror("read error");
+                        exit(1);
+                }
+                write(STDOUT_FILENO, &buf, n);
+        }
 
-![od命令](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/od%E5%91%BD%E4%BB%A4.png)
+        close(fd);
+        return 0;
+}
+```
 
-### 九、传入传出参数
+#### 2. 使用lseek获取文件大小：返回值即大小
+
+```C
+int main(void)
+{
+	int fd;
+
+	fd = open("lseek.txt", O_RDONLY | O_CREAT, 0664);
+	if(fd < 0){
+		perror("open lseek.txt error");
+		exit(1);
+	}
+
+	int len = lseek(fd, 0, SEEK_END);
+	if(len == -1){
+		perror("lseek error");
+		exit(1);
+	}
+	printf("len of msg = %d\n", len);//返回文件大小
+
+	off_t cur = lseek(fd, -10, SEEK_SET);//无效参数
+	printf("--------| %ld\n", cur);
+	if(cur == -1){
+		perror("lseek error");
+		exit(1);
+	}
+```
+
+#### 3. 使用lseek拓展文件大小：要想使文件大小真正拓展，必须引起IO操作，没有添加字符的会有“文件空洞”
+
+```C
+len = lseek(fd, 999, SEEK_SET);//拓展文件大小
+if(len == -1){
+	perror("lseek seek_set error");
+	exit(1);
+}
+  int ret = write(fd, "a", 1);
+if(ret == -1){
+	perror("write error");
+	exit(1);
+}
+```
+
+#### 4.使用 truncate 函数，直接拓展文件。	int ret = truncate("dict.cp", 250);
+
+```C
+int ret = truncate("lseek.txt", 1500);//拓展文件大小
+//int ret = ftruncate(fd, 1000);
+if(ret == -1){
+	perror("ftrun error");
+	exit(1);
+}
+printf("len of file = %d\n", ret);
+
+close(fd);
+return 0;
+}
+```
+
+## 八、od命令
+
+	od -tcx filename //查看文件的16进制表示形式
+	od -tcd filename //查看文件的10进制表示形式
+
+![od命令](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/od.png)
+
+## 九、传入传出参数
 
 	传入参数：
 
