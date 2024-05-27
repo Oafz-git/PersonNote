@@ -44,21 +44,21 @@
 * `TERM`：当前终端类型
 * `LANG`：语言
 * `HOME`：家目录
+* `env`：查看所有环境变量
 
 # 进程控制
 
-## 一、fork函数（创建子进程）/getpid函数、getppid函数（获取进程ID）
+## 一、fork函数（创建子进程）
 
 	pid_t fork(void)
 	
 	fork之后父进程先执行还是子进程先执行不确定，取决于内核所使用的调度算法。
 
-	返回值：创建子进程。父子进程各自返回。父进程返回子进程pid。 子进程返回 0.
+	返回值：
 	
-	getpid();getppid();（获取进程ID）
-
+		创建子进程。父子进程各自返回。父进程返回子进程pid。 子进程返回 0.
 ![fork函数原理](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/fork%E5%87%BD%E6%95%B0%E5%8E%9F%E7%90%86.png)
-	
+
 ### 示例：循环创建n个子进程
 
 ```C
@@ -67,9 +67,9 @@ int main(int argc, char* argv[])
 {
         int i;
         pid_t pid;
-        for(i=0; i<5; i++)	//循环期间，子进程不fork
+        for(i=0; i<5; i++)	////出口1,父进程专用出口，循环期间，子进程不fork
         {
-                if(fork() == 0) break;
+                if(fork() == 0) break;//出口2,子进程出口,i不自增
         }
         if(5 == i)	//父进程，从表达式2跳出
         {
@@ -84,11 +84,15 @@ int main(int argc, char* argv[])
 }
 ```
 
-## 二、进程共享（父子进程差异）
+## 二、getpid()/ getppid()/getuid()/getgid()
+![getpid](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/gitpid.png)
+![getuid](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/gituid.png)
+
+## 三、进程共享（父子进程差异）
 
 ![进程共享](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/%E8%BF%9B%E7%A8%8B%E5%85%B1%E4%BA%AB.png)
 
-## 三、父子进程gdb调试
+## 四、父子进程gdb调试
 
 使用gdb调试的时候，gdb只能跟踪一个进程。可以在fork函数调用之前，通过指令设置gdb调试工具跟踪父进程或跟踪子进程。默认跟踪父进程。
 
@@ -98,13 +102,13 @@ int main(int argc, char* argv[])
 
 注：一定要在fork函数调用之前设置才有效。
 
-## 四、exec函数族：
+## 五、exec函数族：
 
 ![exec函数族](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/exec%E5%87%BD%E6%95%B0%E6%97%8F.png)
 
 ![exec函数族原理](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/exec%E5%87%BD%E6%95%B0%E6%97%8F%E5%8E%9F%E7%90%86.png)
 
-### 示例1
+### 示例1:execlp/execl函数的使用
 
 ```C
 //fork_exec()
@@ -159,7 +163,7 @@ int main(int argc, char* argv[])
 }
 ```
 
-## 五、回收子进程
+## 六、回收子进程
 
 `ps ajx`查看父子进程
 
@@ -190,19 +194,63 @@ int main(int argc, char* argv[])
 
 		函数作用3：	通过传出参数，得到子进程结束状态
 
-	获取子进程正常终止值：
+	获取子进程正常终止值（状态）：
 
 		WIFEXITED(status) --》 为真，说明正常终止 --》调用 WEXITSTATUS(status) --》 得到 子进程 退出值。
 
-	获取导致子进程异常终止信号：
+	获取导致子进程异常终止信号（状态）：
 
 		WIFSIGNALED(status) --》 为真，说明异常终止 --》调用 WTERMSIG(status) --》 得到 导致子进程异常终止的信号编号。
 
 #### 示例：使用wait回收子进程
 
-### 4.waitpid函数：	指定某一个进程进行回收。可以设置非阻塞。			waitpid(-1, &status, 0) == wait(&status);
+```C
+int main(void)
+{
+	pid_t pid, wpid;
+	int status;
+
+	pid = fork();
+
+	if(pid == -1){
+		perror("fork error");
+		exit(1);
+	} else if(pid == 0){		//son
+		printf("I'm process child, pid = %d\n", getpid());
+#if 1
+		execl("./abnor", "abnor", NULL);
+		perror("execl error");
+		exit(1);
+#endif
+		sleep(1);				
+		exit(10);
+	} else {
+		//wpid = wait(NULL);	//传出参数
+		wpid = wait(&status);	//传出参数
+
+		if(WIFEXITED(status)){	//正常退出
+			printf("I'm parent, The child process "
+					"%d exit normally\n", wpid);
+			printf("return value:%d\n", WEXITSTATUS(status));
+
+		} else if (WIFSIGNALED(status)) {	//异常退出
+			printf("The child process exit abnormally, "
+					"killed by signal %d\n", WTERMSIG(status));
+										//获取信号编号
+		} else {
+			printf("other...\n");
+		}
+	}
+
+	return 0;
+}
+```
+
+### 4.waitpid函数：	指定某一个进程进行回收。可以设置非阻塞。			
 
 	pid_t waitpid(pid_t pid, int *status, int options)
+	
+	waitpid(-1, &status, 0) == wait(&status);
 
 	参数：
 		pid：指定回收某一个子进程pid
@@ -217,7 +265,7 @@ int main(int argc, char* argv[])
 
 		status：（传出） 回收进程的状态。
 
-		options：WNOHANG 指定回收方式为，设置为非阻塞状态。
+		options：WNOHANG 指定回收方式为，设置为非阻塞状态。设置为0 默认为阻塞回收
 
 	返回值：
 
@@ -233,6 +281,80 @@ int main(int argc, char* argv[])
 
 		想回收多个。while 
 
-#### 示例：使用waitpid回收多个子进程
+#### 示例1：非阻塞回收
+
+```C
+int main(void)
+{
+	pid_t pid, pid2, wpid;
+	int flg = 0;
+
+	pid = fork();
+	pid2 = fork();
+
+	if(pid == -1){
+		perror("fork error");
+		exit(1);
+	} else if(pid == 0){		//son
+		printf("I'm process child, pid = %d\n", getpid());
+		sleep(5);				
+		exit(4);
+	} else {					//parent
+		do {
+			wpid = waitpid(pid, NULL, WNOHANG);//非阻塞回收
+            //wpid = wait(NULL);
+			printf("---wpid = %d--------%d\n", wpid, flg++);
+			if(wpid == 0){
+				printf("NO child exited\n");
+				sleep(1);		
+			}
+		} while (wpid == 0);		//子进程不可回收
+
+		if(wpid == pid){		//回收了指定子进程
+			printf("I'm parent, I catched child process,"
+					"pid = %d\n", wpid);
+		} else {
+			printf("other...\n");
+		}
+	}
+	return 0;
+}
+```
+
+#### 示例2：使用waitpid回收多个子进程
+
+```C
+int main(int argc, char *argv[])
+{
+	int n = 5, i;				
+pid_t p, q;
+
+	if(argc == 2){	
+		n = atoi(argv[1]);
+	}
+    q = getpid();
+
+	for(i = 0; i < n; i++)	 {
+        p = fork();
+		if(p == 0) {
+			break;			
+        } 
+    }
+
+	if(n == i){  // parent
+		sleep(n);
+		printf("I am parent, pid = %d\n", getpid());
+        for (i = 0; i < n; i++) {
+            p = waitpid(0, NULL, WNOHANG);
+            printf("wait  pid = %d\n", p);
+        }
+	} else {
+		sleep(i);
+		printf("I'm %dth child, pid = %d\n", 
+				i+1, getpid());
+	}
+	return 0;
+}
+```
 
 #### 作业：父进程fork3个子进程，三个子进程一个调用ps命令，一个调用自定义程序1（正常），一个调用自定义程序2（段错误）。父进程使用waitpid对其子进程进行回收。
