@@ -16,9 +16,10 @@
 依赖：目标文件由哪些文件生成
 命令：通过执行该命令由依赖文件生成目标
 
-#默认终极目标是第一条规则的目标
+
+默认终极目标是第一条规则的目标
 ALL:a.out #ALL-->指定终极目标
-#Makefile中的其它规则一般都是为第一条规则服务的
+Makefile中的其它规则一般都是为第一条规则服务的
 ```
 ![](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/makefile_1.png)
 
@@ -26,9 +27,10 @@ ALL:a.out #ALL-->指定终极目标
 
 ```makefile
 src = $(wildcard ./*.c)
-#找到当前目录下所有后缀为.c的文件。将文件名组成列表，赋值给src  src = div1.c sub.c add.c
+	找到当前目录下所有后缀为.c的文件。将文件名组成列表，赋值给src  src = div1.c sub.c add.c
+
 obj = $(patsubst %.c, %.o, $(src))
-#把src变量里所有后缀为.c的文件替换成.o；将参数3中，包含参数1的部分，替换为参数2；$()是取变量的语法    obj = div1.o sub.o add.o
+	把src变量里所有后缀为.c的文件替换成.o；将参数3中，包含参数1的部分，替换为参数2；$()是取变量的语法    obj = div1.o sub.o add.o
 ```
 
 ```makefile
@@ -51,23 +53,24 @@ $< #在规则的命令中，表示第一个依赖条件;
 
 ```makefile
 %.o:%.c
-   gcc -c $< -o $@ # $<:如果将该变量应用在模式规则中，它可将依赖条件列表中的依赖依次取出，套用模式规则。
+   gcc -c $< -o $@ 	
+   	$<:如果将该变量应用在模式规则中，它可将依赖条件列表中的依赖依次取出，套用模式规则。
 ```
-![](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/makefile_4.png)
+![模式规则](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/makefile_4.png)
 
 ## 5. 静态模式规则（查找对应的依赖条件列表）
 ```makefile
 $(obj):%.o:%.c
    gcc -c $< -o $@
 ```
-![](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/makefile_5.png)
+![静态模式规则](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/%E9%9D%99%E6%80%81%E6%A8%A1%E5%BC%8F%E8%A7%84%E5%88%99.png)
 
 ## 6. 伪目标（防止目录下的文件影响MakeFile的指令判断）
 
  ```makefile
    .PHONY: clean ALL
 ```
-![](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/makefile_6.png)
+![伪目标](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/makefile_6.png)
 
 ## 7. 添加参数
 ![](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/makefile_7.png)
@@ -76,7 +79,7 @@ $(obj):%.o:%.c
 make -f m6 # 使用m6文件执行make指令
 ```
  
-## 8. 举例
+## 8. 示例
 ![](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/makefile_9.png)
 ![](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/makefile_8.png)
    

@@ -118,7 +118,8 @@
 | [-d  | 将光标置于待查看宏定义单词上，查看定义语句 |
 
 ***可视模式***
-| 输入 | 输出
+
+| 输入 | 输出 |
 | ---- | ----------------------------|
 | ctrl-v | 进入可视模式（行编辑、行多选） |
 | ctrl-v、ctrl-i|进入可视模式（列编辑、列多选）|
@@ -162,20 +163,17 @@
 ## 三、vim打造IDE
 
 ```shell
-需配置：
 /etc/vim/vimrc
 ~/.vimrc
 ~/vimrc #优先级高
-显示行号：添加 set number
+	显示行号：添加 set number
 ```
 
 ***使用vim命令，内容出现乱码***
 ```shell
-配置~/.vimrc
 set fileencodings=utf-8,ucs-bom,gb18030,gbk,gb2312,cp936
 set termencoding=utf-8
 set encoding=utf-8
-
 ```
 
 
@@ -186,16 +184,14 @@ set encoding=utf-8
 ### 1、gcc编译
 
 ```shell
--E #生成预处理文件
--S #编译，检查语法
--c #只编译，生成.o文件，不进行链接，得到二进制文件
--I #指定头文件目录位置
--g #包含调试信息，编译时添加调试语句。主要支持gdb调试。
--Wall #提示更多警告信息
--D<DEF> #编译时“动态注册”定义宏（可以在调试信息的时候使用）
--On #n=0~3 编译优化，n越大优化越多，（在嵌入式中可以能用）
-
--finput-charset=utf-8 -fexec-charset=utf-8 -fwide-exec-charset=utf-32le #使gcc支持UTF-8
+-E 		生成预处理文件
+-S 		编译，检查语法
+-c 		只编译，生成.o文件，不进行链接，得到二进制文件
+-I 		指定头文件目录位置
+-g 		包含调试信息，编译时添加调试语句。主要支持gdb调试。
+-Wall 		提示更多警告信息
+-D<DEF> 	编译时“动态注册”定义宏（可以在调试信息的时候使用）
+-On 		n=0~3 编译优化，n越大优化越多，（在嵌入式中可以能用）
 ```
 
 ### 2、gdb调试工具
@@ -203,43 +199,44 @@ set encoding=utf-8
 ****
 **run调试**
 ```shell
--g #使用该参数编译可执行文件，得到调试表
+-g 	使用该参数编译可执行文件，得到调试表
+
 gdb a.out
-list/l # list 1： 列出源码。根据源码指定行号设置断点
-break/b # b 20：在20行位置设置断点
-run/r #运行程序/查找“段错误”出现位置
-run 字串1 字串2 ... #设置main函数命令行参数
-next/n #下一条指令（会越过函数）
-step/s #下一条指令（会进入函数）
-print/p # p i：查看变量的值
-until # until 16 执行到16行
-continue #继续执行断点后续指令
-quit #退出当前调试
+	list/l 			list 1： 列出源码。根据源码指定行号设置断点
+	break/b 		b 20：在20行位置设置断点
+	run/r 			运行程序/查找“段错误”出现位置
+	run 字串1 字串2 ... 	设置main函数命令行参数
+	next/n 			下一条指令（会越过函数）
+	step/s 			下一条指令（会进入函数）
+	print/p 		p i：查看变量的值
+	until 			until 16 执行到16行
+	continue 		继续执行断点后续指令
+	quit 			退出当前调试
 ```
 ****
 **start调试**
 ```shell
-start #单步调试
-finish #结束当前函数调用
-set args #设置main函数命令行参数（在start之前开始使用）
+start 		单步调试
+finish 		结束当前函数调用
+set args 	设置main函数命令行参数（在start之前开始使用）
 ```
 
 ****
 **其它命令**
 ```shell
-info b #查看断点信息表
-b 20 if i = 5 #设置条件断点
-delete 20 #删除断点
-ptype p #查看变量类型
-display i #设置跟踪变量
-undisplay 编号 #取消设置跟踪变量（使用变量的编号）
+info b 		查看断点信息表
+b 20 if i = 5 	设置条件断点
+delete 20 	删除断点
+ptype p 	查看变量类型
+display i 	设置跟踪变量
+undisplay 编号 	取消设置跟踪变量（使用变量的编号）
 ```
 
 ****
 **栈帧（与函数调用相关）**
 ```shell
-backtrace/bt #查看函数的调用的栈帧和栈帧编号
-frame #切换函数的栈帧编号
+backtrace/bt 	查看函数的调用的栈帧和栈帧编号
+frame 		切换函数的栈帧编号
 ```
 ![](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/linux7.png)
 ![](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/%E6%A0%88%E5%B8%A7-1.png)
@@ -252,31 +249,44 @@ frame #切换函数的栈帧编号
 
 ### 2、静态库的制作及使用步骤
 1. 将`.c`生成`.o`文件 `gcc -c add.c -o add.o`
+
 2. 使用ar工具制作静态库 `ar rcs lib库名.a add.o sub.o div.o`
+
 3. 编译静态库到可执行文件中：`gcc test.c lib库名.a -o a.out`
+
 4. 静态库需要头文件：`gcc test.c ./lib/lib库名.a -o a.out -I ./inc`
   ![静态库需要头文件](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/%E9%9D%99%E6%80%81%E5%BA%93%E7%9A%84%E4%BD%BF%E7%94%A8-1.png)
 
 ### 3、动态库制作及使用
 1. 将`.c`生成`.o`文件（生成与位置无关的两码 -fPIC）`gcc -c add.c -o add.o -fPIC`
+
 2. 使用`gcc -shared`制作动态库`gcc -shared lib库名.so add.o sub.o div.o`
+
 3. 编译可执行程序时，指定所使用的动态库。`-l`：指定库名（去掉lib前缀和.so后缀） `-L`：指定库路径。
     `gcc test.c -o a.out -l库名 -L库路径`
+
 4. 运行可执行程序`./a.out` 出错！！！
   `error while loading shared libraries: libxxx.so: cannot open shared object file: No such file or dirrectory`
+    
     原因：
+        
         链接器：工作于链接阶段，工作时需要`-l`和`-L`
         动态链接器：工作程序运行阶段，工作时需要提供动态库所在目录位置。
-    解决方式：
-      1. 通过环境变量： `export LD_LIBRARY_PATH=动态库路径`(临时生效：环境变量是进程的概念，终端重启环境变量失效)
-      2. 永久生效：写入终端配置文件。
-        1. `vi ~/.bashrc`
-        2. 写入`export LD_LIBRARY_PATH=动态库路径`（建议使用绝对路径）保存
-        3. `. .bashrc` `source .bashrc` 重启终端 ----> 让修改后的.bashrc生效
-      3. 拷贝自定义动态库到/lib(标准C库所在的目录位置，不推荐)
-      4. 配置文件法
-        1. 修改/etc/ld.so.conf`sudo vi /etc/ld.so.conf`，添加共享库路径
-        2. 更新查找共享库的路径`sudo ldconfig -v`
-        3. 测试你的程序可否找到共享库`ldd a.out`
+    
+解决方式：
+      
+	1. 通过环境变量： `export LD_LIBRARY_PATH=动态库路径`(临时生效：环境变量是进程的概念，终端重启环境变量失效)
+
+	2. 永久生效：写入终端配置文件。
+	  1. `vi ~/.bashrc`
+	  2. 写入`export LD_LIBRARY_PATH=动态库路径`（建议使用绝对路径）保存
+	  3. `. .bashrc` `source .bashrc` 重启终端 ----> 让修改后的.bashrc生效
+	
+	3. 拷贝自定义动态库到/lib(标准C库所在的目录位置，不推荐)
+	4. 配置文件法
+	  1. 修改/etc/ld.so.conf`sudo vi /etc/ld.so.conf`，添加共享库路径
+	  2. 更新查找共享库的路径`sudo ldconfig -v`
+	  3. 测试你的程序可否找到共享库`ldd a.out`
+
 ### 4、数据段合并
 ![](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/%E6%95%B0%E6%8D%AE%E6%AE%B5%E5%90%88%E5%B9%B6.png)

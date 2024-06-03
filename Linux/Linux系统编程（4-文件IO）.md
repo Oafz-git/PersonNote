@@ -21,6 +21,8 @@ C标准函数和系统调用的关系：
 
 		失败： -1， 设置errno	
 
+
+
 	int open(char *pathname, int flags， mode_t mode)		123  775	
 
 	参数：
