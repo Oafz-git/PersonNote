@@ -20,14 +20,14 @@
 	#修改后的配置
 	TYPE="Ethernet"				#以太网类型
 	BOOTPROTo="static"			#dhcp自动获取 none.static手动配置
-	NAME-"ens33"				#网络的名字	
-	DEVICE-"ens33"				#网卡的名字
+	NAME="ens33"				#网络的名字	
+	DEVICE="ens33"				#网卡的名字
 	ONBOOT="'yes"				#开机自启
 	IPADDR=192.168.61.100			#ip地址
 	NETMASK=255.255.255.0			#子网掩码
 	
 	
-	#其实下面网卡和dns都可以不用配胃，因为我有两块网卡，只要有一块网卡有了下面网卡等的配置即可
+	#其实下面网卡和dns都可以不用配置，因为我有两块网卡，只要有一块网卡有了下面网卡等的配置即可
 	GATEWAY=192.168.61.2	#网关
 	DNS1=223.5.5.5		#dns1
 	DNS2=180.76.76.76	#dns2

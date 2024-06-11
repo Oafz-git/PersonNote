@@ -82,10 +82,29 @@
 #### 示例：循环创建5个子进程，父进程用kill函数终止任意一子进程
 
 ```C++
+int main(void)
+{
+	int i;				//默认创建5个子进程
 
+	for(i = 0; i < N; i++)	//出口1,父进程专用出口
+		if(fork() == 0)
+			break;			//出口2,子进程出口,i不自增
+
+    if (i == 3) {
+        sleep(1);
+        printf("-----------child ---pid = %d, ppid = %d\n", getpid(), getppid());
+        kill(getppid(), SIGKILL);
+
+    } else if (i == N) {
+        printf("I am parent, pid = %d\n", getpid());
+        while(1);
+    }
+
+	return 0;
+}
 ```
 
-### 2.软件条件产生信号
+### 2.软件条件产生信号（alarm、setitimer）
 
 	unsigned int alarm(unsigned int seconds);
 	
@@ -110,10 +129,26 @@
 
 ![time命令](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/time%E5%91%BD%E4%BB%A4.png)
 
-#### 示例：使用alarm计数计算机1s能数多少个数
+#### 示例：使用alarm计数计算机1s能数多少个数，输入至文件中
 
 ```C
-
+int main(int argc, char* argv[])
+{
+        int a = 0, fd;
+        alarm(1);
+        fd = open("temp",O_RDWR|O_CREAT|O_TRUNC,0664);
+        if(fd == -1)
+        {
+                perror("open error");
+                exit(1);
+        }
+        dup2(fd, STDOUT_FILENO);
+        while(1)
+        {
+                printf("%d\n", a++);
+        }
+        return 0;
+}
 ```
 
 	setitimer函数：
@@ -164,9 +199,62 @@
 
 			int ret = setitimer(&new_t, &old_t);  定时1秒
 
-####示例：使用setitimer函数实现alarm函数，重复计算机1秒数数程序。
+#### 示例1：使用setitimer函数实现alarm函数，重复计算机1秒数数程序。
 
 ```C
+unsigned int my_alarm(unsigned int sec)
+{
+	struct itimerval it, oldit;
+    int ret;
+
+	it.it_value.tv_sec = sec;
+	it.it_value.tv_usec = 0;
+	it.it_interval.tv_sec = 0;
+	it.it_interval.tv_usec = 0;
+
+	ret = setitimer(ITIMER_REAL, &it, &oldit);
+    if (ret == -1) {
+        perror("setitimer");
+        exit(1);
+    }
+	return oldit.it_value.tv_sec;
+}
+
+int main(void)
+{
+	int i;
+	my_alarm(1);  //alarm(sec);
+
+	for(i = 0; ; i++)
+		printf("%d\n", i);
+
+	return 0;
+}
+```
+
+#### 示例2：捕捉setitimer信号
+```C
+int main(void)
+{
+	struct itimerval it, oldit;
+
+	signal(SIGALRM, myfunc);   //注册SIGALRM信号的捕捉处理函数。
+
+	it.it_value.tv_sec = 2;
+	it.it_value.tv_usec = 0;
+
+	it.it_interval.tv_sec = 5;
+	it.it_interval.tv_usec = 0;
+
+	if(setitimer(ITIMER_REAL, &it, &oldit) == -1){
+		perror("setitimer error");
+		return -1;
+	}
+
+	while(1);
+
+	return 0;
+}
 ```
 
 
@@ -222,7 +310,37 @@
 #### 示例：信号集操作函数练习
 
 ```C
+void printset(sigset_t *ped)
+{
+	int i;
+	for(i = 1; i < 32; i++){
+		if((sigismember(ped, i) == 1)){
+			putchar('1');
+		} else {
+			putchar('0');
+		}
+	}
+	printf("\n");
+}
 
+int main(void)
+{
+	sigset_t set, oldset, ped;
+	sigemptyset(&set);
+	sigaddset(&set, SIGINT);
+#if 0
+	sigaddset(&set, SIGQUIT); 
+	sigaddset(&set, SIGKILL);	//阻塞被忽略
+	sigaddset(&set, SIGSEGV);
+	sigfillset(&set);
+#endif
+	sigprocmask(SIG_BLOCK, &set, &oldset);	
+
+	while(1){
+		sigpending(&ped);       //获取未决信号集
+		printset(&ped);
+		sleep(1);
+	}
 ```
 
 ## 四、信号捕捉
@@ -236,31 +354,106 @@
 #### 示例：signal函数的使用
 
 ```C
+//signal.c
+void do_sig(int a)
+{
+    printf("Hi, SIGINT, how do you do !\n");
+}
 
+int main(void)
+{
+    if (signal(SIGINT, do_sig) == SIG_ERR) {
+        perror("signal");
+        exit(1);
+    }
+
+    while (1) {
+        printf("---------------------\n");
+        sleep(1);
+    }
+
+    return 0;
+}
 ```
 
-### 2.sigaction()函数 重点！！！
+### 2.sigaction()函数 （重点！！！）
 
 ![sigaction函数](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/sigaction%E5%87%BD%E6%95%B0.png)
 
 	参数：
 		act：传入参数，新的处理方式
 		
-		oldact：传出参数，旧的处理方式
+		oldact：传出参数，旧的处理方式，默认传NULL
 
 ![struct_sigaction](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/struct_sigaction.png)
 
-	sa_handler：指定信号捕捉后的处理函数名（即注册函数）。也可赋值为SIG_IGN（表忽略）或SIG_DFL（表执行默认动作）
+	sa_handler：
 	
-	sa_mask：调用信号处理函数时，所要屏蔽的信号集合（信号屏蔽字）。注意：仅在处理函数被调用期间屏蔽生效，是临时性设置。
+		指定信号捕捉后的处理函数名（即注册函数）。
+	
+		也可赋值为SIG_IGN（表忽略）或SIG_DFL（表执行默认动作）
+	
+	sa_mask：
+	
+		* 调用信号处理函数时，所要屏蔽的信号集合（信号屏蔽字）。
+		
+		* 注意：仅在处理函数被调用期间屏蔽生效，是临时性设置。
 	
 	sa_flags：
 		
-		通常设置为0，表使用默认属性。
+		* 通常设置为0，表默认属性（本信号默认屏蔽）
 		
 		设置被信号中断后系统调用是否重启。SA_INTERRURT不重启，SA_RESTART重启。
 		
-		设置为SA_NODEFER，表示在执行捕捉函数期间，不希望自动阻塞该信号，除非sa_mask中包含该信号。
+		设置为SA_NODEFER，表示在执行捕捉函数期间，不希望自动阻塞该信号（发多次信号，会多次执行捕捉函数），除非sa_mask中包含该信号。
+
+**fflush(stdout)函数;刷新缓存**
+
+#### 示例：sigaction函数的使用
+
+```C
+/*
+ * 当执行SIGINT信号处理函数期间
+ * 多次收到SIGQUIT信号都将被屏蔽(阻塞)
+ * SIGINT信号处理函数处理完，立刻解除对
+ * SIGQUIT信号的屏蔽，由于没有捕捉该信号，
+ * 将立刻执行该信号的默认动作，程序退出
+ */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <signal.h>
+
+/*自定义的信号捕捉函数*/
+void sig_int(int signo)
+{
+	printf("catch signal SIGINT\n");	//单次打印，在10s内只处理一次
+	sleep(10);	//模拟信号处理函数执行很长时间
+	printf("----slept 10 s\n");
+}
+
+int main(void)
+{
+	struct sigaction act,old;		
+
+	act.sa_handler = sig_int;
+	act.sa_flags = 0;
+	sigemptyset(&act.sa_mask);		//不屏蔽任何信号
+	sigaddset(&act.sa_mask, SIGQUIT);	//将SIGQUIT加入信号屏蔽集,这就导致,在调用信号处理函数期间不仅不响应SIGINT信号本身,还不响应SIGQUIT
+
+	sigaction(SIGINT, &act, &old);
+	sleep(10);
+	printf("------------main slept 10\n");
+  
+	sigaction(SIGINT, &old, NULL);	//注册信号处理函数
+
+	while(1);//该循环只是为了保证有足够的时间来测试函数特性
+
+	return 0;
+}
+
+```
 
 ### 3.信号捕捉特性：
 
@@ -282,9 +475,71 @@
 
 #### 示例：借助信号完成子进程回收。
 
-	子进程结束运行，其父进程会收到SIGCHLD信号。该信号的默认处理动作是忽略。可以捕捉该信号，在捕捉函数中完成子进程状态的回收
 
 ```C
+子进程结束运行，其父进程会收到SIGCHLD信号。该信号的默认处理动作是忽略。可以捕捉该信号，在捕捉函数中完成子进程状态的回收
+
+//sigaction_child.c
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <signal.h>
+#include <sys/wait.h>
+#include <errno.h>
+#include <pthread.h>
+
+void sys_err(const char *str)
+{
+    perror(str);
+    exit(1);
+}
+
+void catch_child(int signo)
+{
+    pid_t wpid;
+    int status;
+
+    //while((wpid = wait(NULL)) != -1) {
+    while((wpid = waitpid(-1, &status, 0)) != -1) {         // 循环回收,防止僵尸进程出现.
+        if (WIFEXITED(status))
+            printf("---------------catch child id %d, ret=%d\n", wpid, WEXITSTATUS(status));
+    }
+
+    return ;
+}
+
+int main(int argc, char *argv[])
+{
+    pid_t pid;
+//阻塞
+    int i; 
+    for (i = 0; i < 15; i++)
+        if ((pid = fork()) == 0)                // 创建多个子进程
+            break;
+
+    if (15 == i) {
+        struct sigaction act;
+
+        act.sa_handler = catch_child;           // 设置回调函数
+        sigemptyset(&act.sa_mask);              // 设置捕捉函数执行期间屏蔽字
+        act.sa_flags = 0;                       // 设置默认属性, 本信号自动屏蔽
+
+        sigaction(SIGCHLD, &act, NULL);         // 注册信号捕捉函数
+//解除阻塞
+
+        printf("I'm parent, pid = %d\n", getpid());
+
+        while (1);
+
+    } else {
+        printf("I'm child pid = %d\n", getpid());
+        return i;
+    }
+
+    return 0;
+}
 
 ```
 

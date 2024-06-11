@@ -67,7 +67,7 @@ int main(int argc, char* argv[])
 {
         int i;
         pid_t pid;
-        for(i=0; i<5; i++)	////出口1,父进程专用出口，循环期间，子进程不fork
+        for(i=0; i<5; i++)	//出口1,父进程专用出口，循环期间，子进程不fork
         {
                 if(fork() == 0) break;//出口2,子进程出口,i不自增
         }
@@ -100,7 +100,7 @@ int main(int argc, char* argv[])
 
 `set follow-fork-mode parent`设置跟踪父进程
 
-注：一定要在fork函数调用之前设置才有效。
+**注：一定要在fork函数调用之前设置才有效。**
 
 ## 五、exec函数族：
 
@@ -271,7 +271,7 @@ int main(void)
 
 		> 0 : 表成功回收的子进程 pid
 
-		0 : 函数调用时， 参3 指定了WNOHANG， 并且，没有子进程结束。
+		0 : 函数调用时， 如果参3指定了WNOHANG， 并且，没有子进程结束时，返回0。
 
 		-1: 失败。errno
 
@@ -302,7 +302,7 @@ int main(void)
 	} else {					//parent
 		do {
 			wpid = waitpid(pid, NULL, WNOHANG);//非阻塞回收
-            //wpid = wait(NULL);
+            		//wpid = wait(NULL);
 			printf("---wpid = %d--------%d\n", wpid, flg++);
 			if(wpid == 0){
 				printf("NO child exited\n");
@@ -327,12 +327,12 @@ int main(void)
 int main(int argc, char *argv[])
 {
 	int n = 5, i;				
-pid_t p, q;
+	pid_t p, q;
 
 	if(argc == 2){	
 		n = atoi(argv[1]);
 	}
-    q = getpid();
+    	q = getpid();
 
 	for(i = 0; i < n; i++)	 {
         p = fork();

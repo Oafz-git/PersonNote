@@ -15,7 +15,9 @@
 	* `x`表示列出与作业控制相关的信息
 	
 ![ps ajx](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/ps_ajx.png)
+
 * `cat | cat | cat | wc -l`**命令**
+
 ![cat | cat | cat | wc -l](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/cat_wc_l.png)
 
 * **会话：** 多个进程组的结合，**依附于bash创建**
@@ -43,3 +45,38 @@
 
 ### 示例：创建守护进程
 
+```C
+//daemon.c
+int main(int argc, char *argv[])
+{
+    pid_t pid;
+    int ret, fd;
+
+    pid = fork();
+    if (pid > 0)                // 父进程终止
+        exit(0);
+
+    pid = setsid();           //创建新会话
+    if (pid == -1)
+        sys_err("setsid error");
+
+    ret = chdir("/home/itcast/28_Linux");       // 改变工作目录位置
+    if (ret == -1)
+        sys_err("chdir error");
+
+    umask(0022);            // 改变文件访问权限掩码
+
+    close(STDIN_FILENO);    // 关闭文件描述符 0
+
+    fd = open("/dev/null", O_RDWR);  //  fd --> 0
+    if (fd == -1)
+        sys_err("open error");
+
+    dup2(fd, STDOUT_FILENO); // 重定向 stdout和stderr
+    dup2(fd, STDERR_FILENO);
+
+    while (1);              // 模拟 守护进程业务.
+
+	return 0;
+}
+```

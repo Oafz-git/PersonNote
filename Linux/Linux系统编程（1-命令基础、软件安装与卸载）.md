@@ -423,6 +423,16 @@ ps aux | grep 'cupsd' # 检索进程结果集
 
 查找符合条件的文件
 
+## 6、manpage使用
+
+	man -k keyword：搜索包含关键字的手册页。
+	
+	man -f command：显示命令的简短描述，相当于 whatis 命令。
+	
+	man --help：显示 man 命令的帮助信息。
+	
+	man -a command：显示所有匹配的手册页。
+
 # 六、软件包安装
 
 ## 1、apt-get

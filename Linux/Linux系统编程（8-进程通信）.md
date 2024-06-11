@@ -62,12 +62,12 @@ int main(void)
    if (pid < 0) {
        sys_err("fork err");
    } else if (pid == 0) {
-        close(fd[1]);//关闭读端
+        close(fd[1]);//关闭写端
         int len = read(fd[0], buf, sizeof(buf));
         write(STDOUT_FILENO, buf, len);
         close(fd[0]);
    } else {
-       close(fd[0]);//关闭写端
+       close(fd[0]);//关闭读端
        write(fd[1], p, strlen(p));
        wait(NULL);
        close(fd[1]);
@@ -174,10 +174,63 @@ int main(void)
 
 #### 示例：实现无血缘关系进程间通信：
 
-		读端，open fifo O_RDONLY
+	读端，open fifo O_RDONLY
+	写端，open fifo O_WRONLY
 
-		写端，open fifo O_WRONLY
+```C
+//fifo_w.c
+int main(int argc, char *argv[])
+{
+    int fd, i;
+    char buf[4096];
 
+    if (argc < 2) {
+        printf("Enter like this: ./a.out fifoname\n");
+        return -1;
+    }
+    fd = open(argv[1], O_WRONLY);       //打开管道文件
+    if (fd < 0) 
+        sys_err("open");
+
+    i = 0;
+    while (1) {
+        sprintf(buf, "hello itcast %d\n", i++);
+
+        write(fd, buf, strlen(buf));    // 向管道写数据
+        sleep(1);
+    }
+    close(fd);
+
+    return 0;
+}
+```
+
+```C
+//fifo_r.c
+int main(int argc, char *argv[])
+{
+    int fd, len;
+    char buf[4096];
+
+    if (argc < 2) {
+        printf("./a.out fifoname\n");
+        return -1;
+    }
+    //int fd = mkfifo("testfifo", 644);
+    //open(fd, ...);
+    fd = open(argv[1], O_RDONLY);   // 打开管道文件
+    if (fd < 0) 
+        sys_err("open");
+    while (1) {
+        len = read(fd, buf, sizeof(buf));   // 从管道的读端获取数据
+        write(STDOUT_FILENO, buf, len);
+        sleep(3);           //多個读端时应增加睡眠秒数,放大效果.
+    }
+    close(fd);
+
+    return 0;
+}
+```
 
 
 # 共享内存映射:
@@ -245,7 +298,7 @@ int main(void)
 
 	9. 映射区访问权限为 “私有”MAP_PRIVATE, 对内存所做的所有修改，只在内存有效，不会反应到物理磁盘上。
 
-	10.  映射区访问权限为 “私有”MAP_PRIVATE, 只需要open文件时，有读权限，用于创建映射区即可。
+	10.映射区访问权限为 “私有”MAP_PRIVATE, 只需要open文件时，有读权限，用于创建映射区即可。
 
 
 ### mmap函数的保险调用方式：
@@ -257,7 +310,7 @@ int main(void)
 
 ### 示例1：父子进程使用 mmap 进程间通信：
 
-	父进程 先 创建映射区。 open（ O_RDWR） mmap( MAP_SHARED );
+	父进程 先 创建映射区。 open（O_RDWR） mmap(MAP_SHARED);
 
 	指定 MAP_SHARED 权限
 
@@ -351,7 +404,7 @@ int main(int argc, char *argv[])
     mm = mmap(NULL, sizeof(student), PROT_READ, MAP_SHARED, fd, 0);
     if (mm == MAP_FAILED)
         sys_err("mmap error");
-    close(fd);
+    close(fd);//注意：生成文件描述符后就可以关闭文件了
     while (1) {
         printf("id=%d\tname=%s\t%c\n", mm->id, mm->name, mm->sex);
         sleep(2);
@@ -360,8 +413,8 @@ int main(int argc, char *argv[])
 
     return 0;
 }
-
-
+```
+```C
 //mmap_w.c
 struct STU {
     int id;

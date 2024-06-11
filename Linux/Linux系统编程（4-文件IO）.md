@@ -76,8 +76,9 @@ C标准函数和系统调用的关系：
 
 		失败：	-1， 设置 errno
 
-		-1： 并且 errno = EAGIN 或 EWOULDBLOCK, 说明不是read失败，而是read在以非阻塞方式读一个设备文件（网络文件），并且文件无数据。
-
+			errno = EAGIN 或 EWOULDBLOCK, 说明不是read失败，而是read在以非阻塞方式读一个设备文件（网络文件），并且文件无数据。
+			
+			errno = EINTR 慢速系统调用被中断
 
 	ssize_t write(int fd, const void *buf, size_t count);
 
