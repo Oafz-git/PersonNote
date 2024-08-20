@@ -1,0 +1,35 @@
+## 一、转换函数（conversion function）
+
+```C++
+//将Fraction转double
+class Fraction
+{//分数
+public:
+	Fraction(int num, int den = 1)
+	:	m_mumerator(num), m_denominator(den) { }
+	operator double() const		//这个形式就是转换函数
+	{				//分数转小数（double类型）
+		return (double) (m_numerator / m_denominator);
+	}
+private:
+	int m_numerator; 	//分子
+	int m_denominator;	//分母
+};
+
+int main()
+{
+	Fraction f(3,5);
+	double d = 4 + f; //调用operator double() 将f转为double
+}
+```
+【注】在执行`double d = 4 + f;`时，编译器会先找`operator+`的第一个参数是否满足类型匹配（整数或浮点数）；如果上边能够满足，就通过重载`operator+`执行；如果找不到，编译器会再尝试查找是否有`operator double() const`的转换函数。
+
+
+
+
+
+
+
+
+
+
