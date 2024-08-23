@@ -553,7 +553,7 @@ int main()
 
 **思考：** 如果没有【原型】，是否可以将`clone()`设为静态函数创建对象呢？
 	
-* 不行，因为通过静态函数创建对象，需要class name，这里获取不到class name；
+不行，因为通过静态函数创建对象，需要class name，这里获取不到class name；
 
 3. 在`clone()`中是通过`#LandSatImage(int)`构造函数创建对象的：`-LandSatImage()`这个构造函数是创建【原型】的，并且这两个构造函数是通过参数int区别的。
 
