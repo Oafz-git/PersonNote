@@ -5,7 +5,6 @@
 * pointer-like object
 * function-like object
 * template specialization
-* variadic template(since C++11)
 * Rvalue reference(since C++11)
 * range-base for loop(since C++11)
 * Object Modal
@@ -47,6 +46,8 @@ int main()
 在执行`double d = 4 + f;`时，编译器由于找不到满足`operator+`的满足类型匹配（整数或浮点数）；会这再尝试查找是否有`operator double() const`的转换函数。
 
 ### 2.认识non-explicit-one-argument-ctor
+
+【注】在C++2.0之前，explicit**只能**作用于一个实参（argument）的ctor
 
 ```C++
 class Fraction
@@ -150,19 +151,11 @@ int main()
 
 ![not_template_template_parameter](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/not_template_template_parameter.png)
 
-### 6.数量不定的模板参数（variadic templates）-（since C++11）
-
-![variadic_templates](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/variadic_templates.png)
-
-## 六、ranged-based for loop（since C++11）
-
-![ranged_based_for_loop](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/ranged_based_for_loop.png)
-
-## 七、reference
+## 六、reference
 
 ![reference](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/reference.png)
 
-## 八、Object Modal（对象模型）
+## 七、Object Modal（对象模型）
 
 ###  1.虚指针`vptr`、虚表`vtbl`及多态用法
 

@@ -1,0 +1,139 @@
+## 一、概述
+
+**语言：**
+
+* Variadic Templates
+* move Semantics
+* auto
+* Range-base for loop
+* Initializer list
+* Lambdas
+
+**标准库：**
+
+* type_traits
+* Unordered容器
+* forward_list
+* array
+* tuple
+* Con-currency
+* RegEx
+
+## 二、Variadic Templates（数量不定的模板参数）
+
+![variadic_templates](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/variadic_templates.png)
+
+### 案例1：在标准库hash function的使用--递归函数调用
+
+![variadic_templates1](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/variadic_templates1.png)
+
+### 案例2：在标准库tuple中的使用--递归继承
+
+![variadic_templates2](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/variadic_templates2.png)
+
+## 三、Initializer_list<>（个数不定的参数）
+
+### 1.认识统一初始化格式-Unifrom Initialization/初始化列表-Initializer list
+
+![Unifrom_Initialization](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/Unifrom_Initialization.png)
+
+### 2.认识initializer_list<>
+
+从`Unifrom Initialization`【统一初始化格式】到`Initializer List`【初始化列表】,背后是由`initializer_list<>`支撑实现的
+
+![认识initializer_list](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/%E8%AE%A4%E8%AF%86initializer_list.png)
+
+### 3.分析initializer_list<>
+
+![分析initializer_list](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/%E5%88%86%E6%9E%90initializer_list.png)
+
+### 4.标准库中的initializer_list<>及使用测试
+
+![标准库中的initializer_list](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/%E6%A0%87%E5%87%86%E5%BA%93%E4%B8%AD%E7%9A%84initializer_list.png)
+
+## 四、`explicit` for ctor taking more than one argument
+
+【注】在C++2.0之前，explicit**只能**作用于一个实参（argument）的ctor
+
+![explicit_for_ctors](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/explicit_for_ctors.png)
+
+## 五、ranged-based for loop
+
+【注】如果这里想要修改元素的值，必须使用reference
+
+![ranged_based_for_loop](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/ranged_based_for_loop.png)
+
+【注】在构造函数中使用了`explicit`关键字，不能使用`ranged-based for loop`，因为不能进行隐式转换
+
+![ranged_based_for_loop2](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/ranged_based_for_loop2.png)
+
+## 六、=default、=delete
+
+### 1.认识=default、=delete
+
+* 如果你自定义了一个ctor，那么编译器就不会再给你一个default ctor
+
+* 如果class是有继承其它父类的话，这个class必须调用父类的ctor，这个动作就放在default ctor中
+
+* 如果你强制加上了=default，就可以重新获得并使用default ctor
+
+```C++
+class Zoo
+{
+public:
+	Zoo(int i1, int i2) : d1(i1), d2(i2) { }
+	Zoo(const Zoo&) = delete;//拷贝构造
+	Zoo(Zoo&&) = default;//右值引用（C++2.0新增）
+	Zoo& operator = (const Zoo&) = default;//拷贝赋值
+	Zoo& operator = (const Zoo&&) = delete;
+	virtual ~Zoo() { }
+private:
+	int d1, d2;
+};
+```
+### 2.=default、=delete的几种使用情况
+
+![default和delete的使用情况](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/default%E5%92%8Cdelete%E7%9A%84%E4%BD%BF%E7%94%A8%E6%83%85%E5%86%B5.png)
+
+### 3.回顾默认构造函数（注意几点）
+
+![silently_writes_and_calls](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/silently_writes_and_calls.png)
+
+* 如果一个class带有point member，那么可以断定这个类需要自定义`Big-Three`（指的是构造函数、拷贝构造、拷贝赋值）;如果不带有，那么应该不需要自定义
+
+### 4.拷贝构造的特殊用法（No-Copy and Private-Copy）
+
+![no-copy&private-copy](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/no-copy&private-copy.png)
+
+## 七、Alias Template（模板化名）
+
+### 1. 认识Alias Template
+
+![Alias_Template](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/Alias_Template.png)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
