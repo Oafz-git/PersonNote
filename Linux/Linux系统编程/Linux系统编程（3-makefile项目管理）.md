@@ -1,0 +1,85 @@
+# 命名：makefile / Makefile
+
+工作原理（为了不在每次编译的时候要把所有文件都重新编译一次，可以先将文件生成为.o文件）：
+
+* 若想生成目标，检查规则中的依赖条件是否存在，如不存在，则寻找是否有规则用来生成该依赖文件（依赖条件如果不存在，找寻新的规则去产生依赖）
+* 检查规则中的目标是否需要更新，必须先检查它的所有依赖，依赖中有任一个被更新，则目标必须更新（目标的时间必须晚于依赖条件的时间，否则更新目录）
+
+## 1. 一个规则
+
+```makefile
+目标:依赖
+   （一个tab缩进）命令
+如：add.o:add.c
+   (一个tab缩进) gcc -Wall -g -c add.c -o add.o
+目标：最终要生成的目标文件（伪目标除外）
+依赖：目标文件由哪些文件生成
+命令：通过执行该命令由依赖文件生成目标
+
+
+默认终极目标是第一条规则的目标
+ALL:a.out #ALL-->指定终极目标
+Makefile中的其它规则一般都是为第一条规则服务的
+```
+![](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/makefile_1.png)
+
+## 2. 两个函数
+
+```makefile
+src = $(wildcard ./*.c)
+	找到当前目录下所有后缀为.c的文件。将文件名组成列表，赋值给src  src = div1.c sub.c add.c
+
+obj = $(patsubst %.c, %.o, $(src))
+	把src变量里所有后缀为.c的文件替换成.o；将参数3中，包含参数1的部分，替换为参数2；$()是取变量的语法    obj = div1.o sub.o add.o
+```
+
+```makefile
+clean: #没有依赖
+   -rm -rf $(obj) a.out #第一个“-”：作用是，出错依然执行，删除不存在文件时，不报错。顺序执行结束。
+make clean -n # -n -->指的是“模拟”执行一次clean下的命令，并没有真的执行
+```
+![](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/makefile_2.png)
+
+## 3. 三个自动变量
+
+```makefile
+$@ #在规则的命令中，表示规则中的目标
+$^ #在规则的命令中，表示所有依赖条件
+$< #在规则的命令中，表示第一个依赖条件;
+```
+![](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/makefile_3.png)
+
+## 4. 模式规则（为了方便扩展程序）
+
+```makefile
+%.o:%.c
+   gcc -c $< -o $@ 	
+   	$<:如果将该变量应用在模式规则中，它可将依赖条件列表中的依赖依次取出，套用模式规则。
+```
+![模式规则](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/makefile_4.png)
+
+## 5. 静态模式规则（查找对应的依赖条件列表）
+```makefile
+$(obj):%.o:%.c
+   gcc -c $< -o $@
+```
+![静态模式规则](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/%E9%9D%99%E6%80%81%E6%A8%A1%E5%BC%8F%E8%A7%84%E5%88%99.png)
+
+## 6. 伪目标（防止目录下的文件影响MakeFile的指令判断）
+
+ ```makefile
+   .PHONY: clean ALL
+```
+![伪目标](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/makefile_6.png)
+
+## 7. 添加参数
+![](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/makefile_7.png)
+
+```makefile
+make -f m6 # 使用m6文件执行make指令
+```
+ 
+## 8. 示例
+![](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/makefile_9.png)
+![](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/makefile_8.png)
+   
