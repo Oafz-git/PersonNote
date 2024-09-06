@@ -5,6 +5,14 @@ C标准函数和系统调用的关系：
 
 # 文件IO
 
+* **open函数/close函数**
+* 错误处理函数errno
+* **read函数/write函数（阻塞和非阻塞）**
+* strace命令
+* **fcntl函数**
+* **lseek函数**
+* **truncate函数**
+
 ## 一、open函数/close函数
 
 	int open(char *pathname, int flags)			#include <unistd.h>
@@ -173,6 +181,8 @@ int main(int argc, char* argv[])
 
 ### 示例：非阻塞方式读取终端文件
 
+说明：循环定时10s，每2秒进行非阻塞读取并输出“try again”，10s内终端未输入数据为超时，输出“time out”
+
 ```C
 //nonblock_timeout.c
 #include <unistd.h>
@@ -241,6 +251,8 @@ int main(void)
 ![位图](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/%E4%BD%8D%E5%9B%BE.png)
 
 ### 示例：为stdin添加属性信息
+
+说明：通过fcntl添加O_NONBLOCK属性
 
 ```C
 #include <unistd.h>
@@ -363,6 +375,7 @@ int main(void)
 		perror("lseek error");
 		exit(1);
 	}
+}
 ```
 
 #### 3. 使用lseek拓展文件大小：要想使文件大小真正拓展，必须引起IO操作，没有添加字符的会有“文件空洞”

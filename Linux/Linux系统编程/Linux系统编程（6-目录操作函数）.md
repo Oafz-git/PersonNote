@@ -1,3 +1,12 @@
+
+* getcwd函数
+* **chdir函数**
+* **opendir函数**
+* **closedir函数**
+* **readdir函数**
+* **dup函数/dup2函数**
+
+
 # 目录操作函数
 
 ## 一、getcwd函数

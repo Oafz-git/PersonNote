@@ -6,6 +6,14 @@
 
 #	文件系统函数
 
+* **stat/lstat函数**
+* access函数
+* chomd函数/fchmod函数
+* **truncate函数/ftruncate函数**
+* **link/unlink函数**
+* symlink函数/readlink函数
+* rename函数
+
 ## 一、stat/lstat函数（获取文件属性，从inode中获取）
 
 	int stat(const char *path, struct stat *buf);
@@ -108,12 +116,6 @@ myrm.c
 int main(int argc, char* argv[])
 {
         int ret=0;
-        ret = link(argv[1],argv[2]);
-        if(ret == -1)
-        {
-                perror("link error");
-                exit(1);
-        }
         ret = unlink(argv[1]);
         if(ret == -1)
         {

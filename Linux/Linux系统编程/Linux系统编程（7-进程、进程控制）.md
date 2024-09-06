@@ -84,13 +84,80 @@ int main(int argc, char* argv[])
 }
 ```
 
-## 二、getpid()/ getppid()/getuid()/getgid()
-![getpid](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/gitpid.png)
-![getuid](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/gituid.png)
+## 二、获取进程中相关id函数
+
+1. getpid函数：获取当前进程ID`pid_t getpid();`
+
+2. getppid函数：获取当前进程的父进程ID`pid_t getppid();`
+
+3. getuid函数：
+
+	* 获取当前进程实际用户ID`uid_t getuid();`
+	
+	* 获取当前进程有效用户ID`uid_t geteuid();`
+
+4. getgid函数：
+	
+	* 获取当前进程使用用户组ID`gid_t getgid();`
+	
+	* 获取当前进程有效用户组ID`gid_t getegid();`
+
+【注】区分一个函数是“系统函数”还是“库函数”：
+
+*  是否访问内核数据结构
+	
+* 是否访问外部硬件资源 
 
 ## 三、进程共享（父子进程差异）
 
-![进程共享](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/%E8%BF%9B%E7%A8%8B%E5%85%B1%E4%BA%AB.png)
+在刚使用`fork`创建子进程时，父子进程之间有哪些异同之处呢？
+
+|父子相同处|父子不同处|
+|----|----|
+|**全局变量**、.data、.text、栈、堆、环境变量、用户ID、宿主目录、进程工作目录、信号处理方式|1.进程ID、2.fork返回值、3.父进程ID、4.进程运行时间、5.闹钟（定时器）、6.未决信号集|
+
+【似乎】子进程复制了父进程0-3G用户空间内容，以及父进程的PCB，但pid不同。
+
+【问题】真的每fork一个子进程都要将父进程的0-3G地址空间完全拷贝一份，然后再映射至物理内存吗？
+
+【答】当然不是！父子进程间遵循**读时共享写时复制**的原则；这样的设计，无论子进程执行父进程的逻辑还是执行自己的逻辑都能节省内存开销。
+
+【重点】父子进程共享：
+
+1. **文件描述符** 
+
+2. **mmap建立的映射区**
+
+#### 示例1：编写程序测试，父子进程是否共享全局变量（父子进程不共享全局变量）
+
+```C
+int main(int argc, char* argv[])
+{
+        int var = 100;
+        pid_t pid;
+        pid = fork();
+        if(pid == -1)
+        {
+                perror("fork error");
+                exit(1);
+        }
+
+        if(pid == 0)
+        {
+                printf("child: &var:%x, var=%d\n", &var, var);
+                //var = 200;
+                printf("child: &var:%x, var=%d\n", &var, var);
+        }
+        else if(pid > 0)
+        {
+                printf("parent: &var:%x, var=%d\n", &var, var);
+                var = 300;
+                printf("parent: &var:%x, var=%d\n", &var, var);
+        }
+
+        return 0;
+}
+```
 
 ## 四、父子进程gdb调试
 
@@ -102,11 +169,40 @@ int main(int argc, char* argv[])
 
 **注：一定要在fork函数调用之前设置才有效。**
 
-## 五、exec函数族：
+## 五、exec函数族
 
-![exec函数族](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/exec%E5%87%BD%E6%95%B0%E6%97%8F.png)
+* fork创建子进程后执行的是和父进程相同的程序（但可能执行不同的代码分支），子进程往往要调用一种exec函数以执行另一个程序。
+
+* 当调用一个exec函数时，该进程的**用户空间代码**和**数据**完全被新程序替换，从新程序的启动例程开始执行。
+
+* 调用exec**并不创建新进程**，所以调用exec前后该进程的id并未改变。
+
+* 将当前进程的`.text/.data`替换为所要加载的程序的`.text/.data`，然后让进程从新的.text第一条指令开始执行，但进程ID不变，**换核不换壳**
 
 ![exec函数族原理](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/exec%E5%87%BD%E6%95%B0%E6%97%8F%E5%8E%9F%E7%90%86.png)
+
+* 六种exec函数
+
+	   int execl(const char *path, const char *arg, ...);
+	   int execlp(const char *file, const char *arg, ...);
+	   int execle(const char *path, const char *arg,..., char * const envp[]);
+	   int execv(const char *path, char *const argv[]);
+	   int execvp(const char *file, char *const argv[]);
+	   int execvpe(const char *file, char *const argv[],char *const envp[]);
+
+* 【特性】exec函数一旦调用成功即执行新的程序，**不返回**；**只有在失败才会返回，错误值-1**；所以通常我们直接在exec函数调用后直接调用perror()和exit()，无需if判断。
+
+	* `l(list)`：命令行参数列表
+	
+	* `p(path)`：搜索file时使用path变量
+	
+	* `v(vector)`：使用命令行参数数组
+	
+	* `e(environment)`：使用命令行参数数组，不使用进程原有的环境变量，设置新加载程序运行的环境变量
+	
+事实上，只有`execve`是真正的系统调用，其它五个函数最终都调用`execve`，所以`execve`在man手册第2节，其它函数在man函数第3节。这些函数之间的关系如下
+
+![exec函数特性](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/exec%E5%87%BD%E6%95%B0%E6%97%8F%E7%89%B9%E6%80%A7%EF%BC%882%EF%BC%89.png)
 
 ### 示例1:execlp/execl函数的使用
 
@@ -138,11 +234,6 @@ int main(int argc, char* argv[])
 }
 ```
 
-### 特性
-
-![exec函数特性](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/exec%E5%87%BD%E6%95%B0%E6%97%8F%E7%89%B9%E6%80%A7%EF%BC%881%EF%BC%89.png)
-![exec函数特性](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/exec%E5%87%BD%E6%95%B0%E6%97%8F%E7%89%B9%E6%80%A7%EF%BC%882%EF%BC%89.png)
-
 ### 示例2：将当前系统中的进程信息，打印到文件中
 
 ```C
@@ -169,12 +260,11 @@ int main(int argc, char* argv[])
 
 ### 1.孤儿进程：
 
-	父进程先于子进终止，子进程沦为“孤儿进程”，会被 init 进程领养。
+父进程先于子进终止，子进程沦为**孤儿进程**，会被**init进程**领养。
 
 ### 2.僵尸进程：
 
-	子进程终止，父进程尚未对子进程进行回收，在此期间，子进程残留资源（PCB）存放于内核中，变为“僵尸进程”。  kill 对其无效。
-
+子进程终止，父进程尚未对子进程进行回收，在此期间，子进程残留资源（PCB）存放于内核中，变为**僵尸进程**；  kill 对其无效。
 
 ### 3.wait函数：
 

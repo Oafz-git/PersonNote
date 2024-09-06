@@ -1,4 +1,4 @@
-# Vim和动静态库
+# Vim基础命令
 
 ## 一、vim的三种工作模式
 
@@ -6,7 +6,7 @@
 2. 文本输入模式
 3. 末行模式
 
-![](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/linux4.png)
+![linux4](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/linux4.png)
 
 ## 二、vim的基本操作
 
@@ -109,7 +109,7 @@
 | n-K  | 将光标置于待查看函数单词上，使用n-K（命令模式）跳转。n：指定卷数 |
 | *或# | 查看代码中的函数等定义 |
 
-![](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/manpage.png)
+![manpage](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/manpage.png)
 
 ***查看宏定义***
 
@@ -177,7 +177,7 @@ set encoding=utf-8
 ```
 
 
-## 四、gcc编译
+# gcc编译
 
 ![](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/linux5.png)
 
@@ -241,7 +241,7 @@ frame 		切换函数的栈帧编号
 ![](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/linux7.png)
 ![](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/%E6%A0%88%E5%B8%A7-1.png)
 
-## 五、动态库和静态库
+# 动态库和静态库
 
 ### 1、动态库和静态库区别
 
@@ -288,5 +288,17 @@ frame 		切换函数的栈帧编号
 	  2. 更新查找共享库的路径`sudo ldconfig -v`
 	  3. 测试你的程序可否找到共享库`ldd a.out`
 
-### 4、数据段合并
-![](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/%E6%95%B0%E6%8D%AE%E6%AE%B5%E5%90%88%E5%B9%B6.png)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
