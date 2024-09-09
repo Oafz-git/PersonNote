@@ -10,13 +10,21 @@
 
 	信号是软件层面上的“中断”。一旦信号产生，无论程序执行到什么位置，必须立即停止运行，处理信号，处理结束，再继续执行后续指令。
 
-**所有信号的产生及处理全部都是由【内核】完成的。**
+**【注】所有信号的产生及处理全部都是由【内核】完成的。**
 
 ### 3.信号相关的概念：
 
 * **产生信号：**
 
-![产生信号](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/%E4%BA%A7%E7%94%9F%E4%BF%A1%E5%8F%B7.png)
+	1. 按键产生：`Ctrl+c`、`Ctrl+z`、`Ctrl+\`
+	
+	2. 系统调用产生：`kill`、`raise`、`abort`
+	
+	3. 软件条件产生：**定时器alarm**
+	
+	4. 硬件异常产生：**非法访问内存（段错误）**、**除0（浮点数例外）**、**内存对齐出错（总线错误）**
+	
+	5. 命令产生：`kill`
 
 * **未决：** 产生与递达之间状态，主要由于阻塞（屏蔽）导致该状态
 
@@ -47,9 +55,9 @@
 
 `man 7 signal`查看帮助文档，也可查看`/usr/src/linux-headers-3.16.0.30/arch/s390/include/uapi/asm/signal.h`
 
-![信号一览表](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/%E4%BF%A1%E5%8F%B7%E4%B8%80%E8%A7%88%E8%A1%A8-1.png)
-![信号一览表](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/%E4%BF%A1%E5%8F%B7%E4%B8%80%E8%A7%88%E8%A1%A8-2.png)
-![信号一览表](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/%E4%BF%A1%E5%8F%B7%E4%B8%80%E8%A7%88%E8%A1%A8-3.png)
+![信号一览表-1](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/%E4%BF%A1%E5%8F%B7%E4%B8%80%E8%A7%88%E8%A1%A8-1.png)
+![信号一览表-2](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/%E4%BF%A1%E5%8F%B7%E4%B8%80%E8%A7%88%E8%A1%A8-2.png)
+![信号一览表-3](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/%E4%BF%A1%E5%8F%B7%E4%B8%80%E8%A7%88%E8%A1%A8-3.png)
 
 **总结：**
 
@@ -77,7 +85,17 @@
 
 		失败： -1 errno
 
-![kill权限](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/kill%E6%9D%83%E9%99%90.png)
+**【kill权限】**
+
+* **进程组** 每个进程都属于一个进程组，进程组是一个或多个进程集合，它们相互关联，共同完成一个实体任务；每个进程组都有一个进程组长，默认进程组ID与进程组长ID相同
+
+* **权限保护** root用户可以发送信号给任意用户，普通用户是不能向系统用户发送信号的：
+
+	* `kill -9 (root用户的pid)`是不可以的；
+	
+	* 同样，普通用户也不能向其它普通用户发送信号，终止其进程。只能向自己创建的进程发送信号；
+	
+	* **普通用户的基本规则：发送者实际或有效用户ID == 接收者实际或有效用户ID**
 
 #### 示例：循环创建5个子进程，父进程用kill函数终止任意一子进程
 

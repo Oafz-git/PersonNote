@@ -6,14 +6,42 @@
 
 ## 二、常用方式及特征
 
-![IPC常用方式](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/IPC%E5%B8%B8%E7%94%A8%E6%96%B9%E5%BC%8F.png)
+在进程间完成数据传递需要借助操作系统提供特殊的方法，如：文件、管道、信号、共享内存、消息队列、套接字、命名管道等。随着计算机的蓬勃发展，一些方法由于自身缺陷被淘汰或弃用，现在常用的进程间通信方式有：
+
+1. 管道（使用最简单）
+
+2. 信号（开销最小）
+
+3. 共享映射区（无血缘关系）
+
+4. 本地套接字（最稳定）
 
 # 管道
 
 ## 一、管道概念
 
-![管道概念](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/%E7%AE%A1%E9%81%93-%E6%A6%82%E5%BF%B5.png)
-![管道概念](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/%E7%AE%A1%E9%81%93%E6%A6%82%E5%BF%B52.png)
+管道是一种最基本的IPC机制，作用于有血缘关系的进程间，完成数据传递。调用**pipe系统函数**即可创建一个管道。
+
+**特质：**
+
+1. 其本质是一个**伪文件【实为内核缓冲区】**
+
+2. 由**两个文件描述符引用**，一个表示读端，一个表示写端
+
+3. 规定数据从管道的写端流入管道，从读端流出
+
+**原理：**管道实为内核使用**环形队列**机制，借助**内核缓冲区（4k）实现**
+
+**局限性：**
+
+1. 数据**不能进程自己写，自己读**
+
+2. 管道中数据**不可反复读取**，一旦读走，管道中不再存在
+
+3. 采用**半双工通信方式**，数据只能在单方向上流动
+
+4. 只能在有**公共祖先**的进程间使用管道
+
 ![管道原理](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/%E7%AE%A1%E9%81%93%E5%8E%9F%E7%90%86.png)
 
 ## 二、pipe函数：创建，并打开管道。
@@ -157,14 +185,19 @@ int main(void)
 
 ## 六、管道优劣
 
-![管道优劣](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/%E7%AE%A1%E9%81%93%E4%BC%98%E5%8A%A3.png)
+* 【优点】简单，相比信号，套接字实现进程间通信，简单很多
 
+* 【缺点】
 
-## 七、fifo管道
+	1. 只能单向通信，双向通信需建立两个管道；
+	
+	2. 只能用于父子、兄弟进程（有共同祖先）间通信。
 
-### 1.fifo定义
+## 七、fifo管道【命名管道】
 
-![fifo定义](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/fifo%E5%AE%9A%E4%B9%89.png)
+* 管道`pipe`只能用于**有血缘关系**的进程间，但通过**FIFO**，不相关的进程也能交换数据。
+
+* `FIFO`是Linux基础文件类型中的一种，但FIFO文件在磁盘上没有数据块，仅仅用来标识内核中的一条通道；各进程可以打开这个文件进行`read/write`，实际上是在读写**内核通道**，这样就实现了进程间通信。
 
 ### 2.`mkfifo`命令及mkfifo函数
 	
@@ -242,7 +275,6 @@ int main(int argc, char *argv[])
 ## 二、存储映射概念
 
 ![存储映射](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/%E5%AD%98%E5%82%A8%E6%98%A0%E5%B0%84.png)
-
 
 ## 三、mmap函数
 
@@ -376,9 +408,6 @@ int main(void)
 
 					fifo：数据只能一次读取。
 
-匿名映射：只能用于 血缘关系进程间通信。
-
-	p = (int *)mmap(NULL, 40, PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, -1, 0);
 
 ```C
 //mmap_r.c
@@ -452,15 +481,15 @@ int main(int argc, char *argv[])
 
 ## 五、mmap匿名映射
 
-	只能用于血缘关系进程间通信
+**只能用于血缘关系进程间通信**
 	
 	p = (int *)mmap(NULL, len, PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANON, -1, 0);
 		
 		len大小随意
 	
-`/dev/zero`空白文件：会不断产生空字节，无限的空字节流
+* `/dev/zero`空白文件：会不断产生空字节，无限的空字节流
 
-`/dev/null`黑洞文件：不会满
+* `/dev/null`黑洞文件：不会满
 	
 ### 示例1：使用MAP_ANONYMOUS和MAP_ANON宏
 

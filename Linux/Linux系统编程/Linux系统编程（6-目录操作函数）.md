@@ -173,7 +173,7 @@ int main(int argc, char* argv[])
 	int ret = write(fd2, "1234567", 7);//将写入到fd1所指向的文件中
 	printf("ret = %d\n", ret);
 	
-	dup2(fd1, STDOUT_FILENO);//将屏幕输入，重定向给fd1所指向的文件；
+	dup2(fd1, STDOUT_FILENO);//将屏幕输出，重定向给fd1所指向的文件；
 	printf("----------1234");//向屏幕输出的内容将写入到fd1所指向的文件中
 }
 ```
