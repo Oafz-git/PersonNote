@@ -1,6 +1,6 @@
 # 线程
 
-## 一、线程概念：
+## 一、线程概念（进程和线程的区别）
 
 ![线程概念](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/%E7%BA%BF%E7%A8%8B%E6%A6%82%E5%BF%B5.png)
 
@@ -56,13 +56,13 @@
 
 	int pthread_create(pthread_t *tid, const pthread_attr_t *attr, void *(*start_rountn)(void *), void *arg); //创建子线程。
 
-		参1：传出参数，表新创建的子线程 id
+		参1：【传出参数】表新创建的子线程 id
 
 		参2：线程属性。传NULL表使用默认属性。（线程状态：大小、优先级等）
 
 		参3：子线程回调函数。创建成功，ptherad_create函数返回时，该函数会被自动调用。
 		
-		参4：参3的参数。没有的话，传NULL
+		参4：【传入参数】参3的参数。没有的话，传NULL
 
 		返回值：成功：0
 
@@ -107,9 +107,9 @@ int main(int argc, char* argv[])
 
 ### 示例2：线程共享全局变量
 
-**线程默认共享数据段、代码段等地址空间，常用的是全局变量。**
+**线程**默认共享**数据段**、**代码段**等地址空间，常用的是**全局变量**。
 
-**进程不共享全局变量，只能借助mmap**
+进程不共享全局变量，只能借助mmap
 
 ```C
 int var = 100;
@@ -137,13 +137,11 @@ int main(int argc, char* argv[])
 
 ```
 
-
-
 ## 三、pthread_exit函数
 
 	void pthread_exit(void *retval);  退出当前线程。
 
-		retval：退出值：返回线程，通常传NULL。
+		retval：【传出参数】退出值：返回线程，通常传NULL。
 		
 	三种退出的区别：
 
@@ -153,22 +151,22 @@ int main(int argc, char* argv[])
 
 		pthread_exit(): 退出当前线程。
 	
-	注意：
+【注意】
 		
-		（1）多线程环境中，应尽量不使用exit函数，应该使用pthread_exit函数。
+1. 多线程环境中，应**尽量不使用**exit函数，应该使用pthread_exit函数。
 		
-		（2）其它线程未结束，主线程不能return或exit。
+2. 其它线程未结束，主线程**不能return或exit**。
 		
-		（3）在子线程中使用pthread_exit或return返回的指针所指向的内存单元必须是全局的或者malloc分配的，不能在线程函数的栈上分配，因为当其它线程得到这个返回指针时，线程函数已经退出了。
+**【特别注意】** 在子线程中使用pthread_exit或return返回的指针所指向的**内存单元**必须是全局的或者malloc分配的，不能在线程函数的栈上分配，因为当其它线程得到这个返回指针时，线程函数已经退出了。
 
 
 ## 四、pthread_join函数
 
 	int pthread_join(pthread_t thread, void **retval); //阻塞等待并回收线程，获取线程退出状态。
 
-		thread: 待回收的线程id
+		thread: 【传出参数】待回收的线程id
 
-		retval：传出参数。 回收的子线程的return退出值。
+		retval：【传出参数】 回收的子线程的return退出值。
 
 			线程异常借助，值为 -1。
 
@@ -425,7 +423,7 @@ int main(int argc, char* argv[])
 
 ## 七、检查错误返回
 		
-	检查出错返回：  线程中，只能使用strerror函数
+	检查出错返回：线程中，只能使用strerror函数【因为线程函数是返回errno，而不是设置errno】
 
 	fprintf(stderr, "xxx error: %s\n", strerror(ret));
 
@@ -516,7 +514,7 @@ int main(int argc, char *argv[])
 
 ```
 
-**线程同步问题：** 如果设置一个线程为**分离线程**，而这个线程运行又非常快，它可能在pthread_create函数返回之前就终止了；它终止之后可能将线程号和系统资源移交给其他的线程使用，这样调用pthread_create的线程就得到了错误的线程号。要避免这种情况可以采取一定的同步措施，最简单的方法之一是可以在被创建的线程里调用`pthread_cond_timewait`函数，设置一段等待时间，是在多线程编程里常用的方法。但注意不要使用诸如wait()之类的函数，它们是使整个进程睡眠，并不能解决线程同步的问题。
+**线程同步问题：** 如果设置一个线程为**分离线程**，而这个线程运行又非常快，它可能在pthread_create函数返回之前就终止了；它终止之后可能将线程号和系统资源移交给其他的线程使用，这样调用pthread_create的线程就得到了错误的线程号。要避免这种情况可以采取一定的同步措施，最简单的方法之一是可以在被创建的线程里调用`pthread_cond_timedwait`函数，设置一段等待时间，是在多线程编程里常用的方法。但注意不要使用诸如wait()之类的函数，它们是使整个进程睡眠，并不能解决线程同步的问题。
 
 ## 十、线程使用注意事项
 

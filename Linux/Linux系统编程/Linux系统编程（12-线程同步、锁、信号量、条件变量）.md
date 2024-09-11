@@ -205,6 +205,14 @@ int main(void)
 
 **本身不是锁！  但是通常结合锁来使用。 mutex**
 
+**实现步骤：**
+
+![条件变量的实现](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/%E6%9D%A1%E4%BB%B6%E5%8F%98%E9%87%8F%E7%9A%84%E5%AE%9E%E7%8E%B0.png)
+
+1. 当任务A一开始抢到互斥锁并且成功上锁后，由于公共资源中没有数据能够读取，所以只能等待条件满足【也就是有数据写入，但是由于任务A无法实现此功能，所以利用条件变量，休眠任务A，让任务B去执行】，调用pthread_cond_wait，等待条件满足。
+
+2. pthread_cond_wait的内部其实就是解开了任务A当前的互斥锁，阻塞等待条件满足，然后让B成功上锁，等待B往公共资源写入数据（满足条件），然后B会发出信号通知休眠的任务A，解除A等待条件的阻塞，然后A再次阻塞与上互斥锁的，此时B解开互斥锁，让A重新上锁，然后A满足条件后成功执行，最后解除A互斥锁
+
 ![pthread_cond_wait函数](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/pthread_cond_wait%E5%87%BD%E6%95%B0.png)
 
 	pthread_cond_t cond;//类型
@@ -294,11 +302,11 @@ void *consumer(void *arg)
         struct msg *mp;
 
         pthread_mutex_lock(&mutex);                         // 加锁 互斥量
-        while (head == NULL) {															// 注：多个消费者，这里需要使用while，不能使用if
+        while (head == NULL) {				    // 注：多个消费者，这里需要使用while，不能使用if
             pthread_cond_wait(&has_data, &mutex);           // 阻塞等待条件变量, 解锁
         }                                                   // pthread_cond_wait 返回时, 重新加锁 mutex
 
-        mp = head;																					//读公共区域
+        mp = head;					    //读公共区域
         head = mp->next;
 
         pthread_mutex_unlock(&mutex);                       // 解锁 互斥量
@@ -342,51 +350,54 @@ int main(int argc, char *argv[])
 
 ## 四、信号量： 
 
-* 应用于线程、进程间同步（既能保证同步，数据不混乱，又能提高线程并发）。
+[信号量全面解析与使用](https://blog.csdn.net/sun_0228/article/details/138160558)
 
-* 相当于 初始化值为 N 的互斥量。  N值，表示可以同时访问共享数据区的线程数。
+**【功能】**
 
-![信号量函数](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/%E4%BF%A1%E5%8F%B7%E9%87%8F-%E5%87%BD%E6%95%B0.png)
+1. **同步**：信号量可以实现线程之间的同步，确保线程在正确的时机访问**共享资源**。
+
+2. **互斥**：通过设置信号量的初始值为1，可以实现**互斥锁**的功能，确保同一时间只有一个线程访问共享资源。
+
+3. **计数**：信号量还可以用来限制对资源的并发访问数量，通过设置不同的初始值，可以**控制同时访问资源的线程数**。
 	
-	sem_t sem;	定义类型。
+		sem_t sem;	定义类型。
 
-	int sem_init(sem_t *sem, int pshared, unsigned int value);
+		int sem_init(sem_t *sem, int pshared, unsigned int value);
 
-	参数：
-		sem： 信号量 
+		参数：
+			sem： 信号量 
 
-		pshared：	0： 用于线程间同步
+			pshared：	0： 用于线程间同步
+					
+					1： 用于进程间同步
+
+			value：N值。（指定同时访问的线程数）
+
+		sem_destroy();
+
+		sem_wait();		一次调用，做一次-- 操作， 当信号量的值为 0 时，再次 -- 就会阻塞。 （对比 pthread_mutex_lock）
+
+		sem_post();		一次调用，做一次++ 操作. 当信号量的值为 N 时, 再次 ++ 就会阻塞。（对比 pthread_mutex_unlock）
+
+		sem_timewait(sem_t *sem, const struct timespec* abs_timeout);
+			
+				//abs_timeout 采用的是绝对时间。
 				
-				1： 用于进程间同步
-
-		value：N值。（指定同时访问的线程数）
-
-	sem_destroy();
-
-	sem_wait();		一次调用，做一次-- 操作， 当信号量的值为 0 时，再次 -- 就会阻塞。 （对比 pthread_mutex_lock）
-
-	sem_post();		一次调用，做一次++ 操作. 当信号量的值为 N 时, 再次 ++ 就会阻塞。（对比 pthread_mutex_unlock）
-
-	sem_timewait(sem_t *sem, const struct timespec* abs_timeout);
-		
-			//abs_timeout 采用的是绝对时间。
+			定时1秒：
 			
-		定时1秒：
-		
-			time_t cur = time(NULL);获取当前时间（相对时间）
+				time_t cur = time(NULL);获取当前时间（相对时间）
 
-			struct timespec t;定义timespec结构体变量t
+				struct timespec t;定义timespec结构体变量t
+				
+				t.tv_sec = cur + 1;定时1秒
+				
+				t.tv_nsec = t.tv_sec+100;
 			
-			t.tv_sec = cur + 1;定时1秒
-			
-			t.tv_nsec = t.tv_sec+100;
-		
-			sem_timedwait(&sem, &t);传参
+				sem_timedwait(&sem, &t);传参
 			
 ## 示例：使用信号量实现生产者、消费者模型
 
 ![信号量-生产者消费者模型](https://oafz-draw-bed.oss-cn-beijing.aliyuncs.com/img/%E4%BF%A1%E5%8F%B7%E9%87%8F-%E7%94%9F%E4%BA%A7%E8%80%85%E6%B6%88%E8%B4%B9%E8%80%85%E6%A8%A1%E5%9E%8B.png)
-
 
 ```C
 //sem_product_consumer.c
@@ -454,7 +465,11 @@ int main(int argc, char *argv[])
 
 ```
 
+### 条件变量和信号量的区别
 
+* **条件变量**主要用于**线程间**的同步，通常与**互斥锁**配合使用，用于实现线程的等待和唤醒操作；
+
+* 而**信号量**则是一种更通用的同步机制，既可以用于**进程间同步**，也可以用于**线程间同步**，且可以控制对**临界资源**的访问。
 
 
 
